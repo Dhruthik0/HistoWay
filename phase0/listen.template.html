@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Histoway Phase 0</title>
+<style>
+  body { font: 16px/1.5 system-ui, sans-serif; margin: 0 auto; max-width: 760px; padding: 16px; background: #fff; color: #222; }
+  @media (prefers-color-scheme: dark) { body { background: #121212; color: #ddd; } .card { border-color: #444; } }
+  .bar { position: sticky; top: 0; background: inherit; padding: 8px 0; display: flex; gap: 8px; flex-wrap: wrap; }
+  button, select { font-size: 16px; padding: 8px 12px; }
+  .card { border: 1px solid #ccc; border-radius: 8px; padding: 12px; margin: 12px 0; }
+  .card.playing { outline: 3px solid #2a7; }
+  .meta { font-size: 13px; opacity: .75; }
+  .flag { color: #c50; }
+  details { margin-top: 8px; font-size: 14px; }
+</style>
+</head>
+<body>
+<h1>Histoway Phase 0: listening test</h1>
+<p class="meta">Pass: at least 7 of 10 sound like a storyteller, have no invented facts (check against the article link), and cover the dark side where it exists.</p>
+<div class="bar">
+  <button id="all">Play all</button>
+  <button id="stop">Stop</button>
+  <select id="voice" aria-label="Voice"></select>
+</div>
+<div id="list"></div>
+<script>
+const STORIES = /*STORIES*/[];
+const synth = speechSynthesis, voiceSel = document.getElementById('voice'), list = document.getElementById('list');
+let queue = [];
+
+function loadVoices() {
+  const lang = v => v.lang.replace('_', '-');  // Android reports en_IN, desktop en-IN
+  const voices = synth.getVoices().filter(v => lang(v).startsWith('en'));
+  voices.sort((a, b) => (lang(b) === 'en-IN') - (lang(a) === 'en-IN'));
+  voiceSel.innerHTML = voices.map((v, i) => `<option value="${i}">${v.name} (${v.lang})${v.localService ? '' : ' [online]'}</option>`).join('');
+  voiceSel.voices = voices;
+}
+synth.onvoiceschanged = loadVoices; loadVoices();
+
+function esc(s) { return String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function speak(i, text, then) {
+  synth.cancel();
+  document.querySelectorAll('.card').forEach(c => c.classList.toggle('playing', c.dataset.i == i));
+  // One utterance per sentence: Chrome cuts long utterances off partway with some voices.
+  const parts = text.match(/[^.!?]+[.!?]+["')\]]*\s*|[^.!?]+$/g) || [text];
+  parts.forEach((p, k) => {
+    const u = new SpeechSynthesisUtterance(p.trim());
+    u.voice = voiceSel.voices?.[voiceSel.value] || null;
+    u.rate = 1.05; u.pitch = 1.1;  // a touch livelier than the flat default
+    if (k === parts.length - 1) u.onend = () => then && then();
+    synth.speak(u);
+  });
+}
+
+function playNext() {
+  if (!queue.length) return;
+  const i = queue.shift();
+  speak(i, STORIES[i].script, () => setTimeout(playNext, 1500));
+}
+
+list.innerHTML = STORIES.map((s, i) => `
+  <div class="card" data-i="${i}">
+    <strong>${i + 1}. ${esc(s.name)}</strong>
+    <span class="meta"> tier ${s.tier} · ${s.script.split(/\s+/).length} words${s.sensitive ? ' · SENSITIVE, review by hand' : ''}${s.has_dark_history ? ' · dark history' : ''}</span>
+    ${s.flags.map(f => `<div class="flag">⚠ ${esc(f)}</div>`).join('')}
+    <p>${esc(s.script)}</p>
+    <button onclick="queue=[];speak(${i}, STORIES[${i}].script)">Play</button>
+    ${s.more_script ? `<button onclick="queue=[];speak(${i}, STORIES[${i}].more_script)">Tell me more</button>` : ''}
+    <a href="${esc(s.url)}" target="_blank" rel="noopener">Article</a>
+    <details><summary>Claims (${s.claims.length})</summary>
+      <ul>${s.claims.map(c => `<li><em>${esc(c.kind)}</em>: ${esc(c.text)}</li>`).join('')}</ul>
+    </details>
+    ${s.more_script ? `<details><summary>More script</summary><p>${esc(s.more_script)}</p></details>` : ''}
+  </div>`).join('');
+
+document.getElementById('all').onclick = () => { queue = STORIES.map((_, i) => i); playNext(); };
+document.getElementById('stop').onclick = () => { queue = []; synth.cancel(); };
+</script>
+</body>
+</html>

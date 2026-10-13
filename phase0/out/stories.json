@@ -1,0 +1,396 @@
+{
+  "Vidhana Soudha": {
+    "script": "What if a government building could look like a palace, but stand for something completely different? Ahead is Vidhana Soudha, Bengaluru’s great symbol of democratic government. Its story begins after India became independent in 1947. The government wanted a new home for the legislature, and Chief Minister Kengal Hanumanthaiah wanted it to feel distinctly Indian rather than colonial. In 1951, Jawaharlal Nehru laid its foundation stone. Then came the big change: Hanumanthaiah revised the plan, adding government offices, archives, a library and a banquet hall, with artistic details representing Mysore state. Construction began in 1952 and finished in 1956. More than 5,000 workers took part, including some prisoners who were released after completing their work. And look closely at the architecture. Granite pillars, temple-inspired columns, Rajasthani-style balconies, and a huge central dome come together in one dramatic building. Hanumanthaiah called it a “people’s palace.” There was controversy too: opposition leaders criticised the government for excessive spending, leading to an inquiry. From palace-like grandeur to democratic purpose, Vidhana Soudha was built to make a statement.",
+    "more_script": null,
+    "claims": [
+      {
+        "text": "Vidhana Soudha serves as the seat of the Karnataka Legislative Assembly and Legislative Council.",
+        "kind": "verified"
+      },
+      {
+        "text": "Jawaharlal Nehru laid the foundation stone of Vidhana Soudha on 13 July 1951.",
+        "kind": "verified"
+      },
+      {
+        "text": "Construction began in 1952 and was completed in 1956.",
+        "kind": "verified"
+      },
+      {
+        "text": "More than 5,000 workers were employed in the construction, including some prisoners who were released after completing the work.",
+        "kind": "verified"
+      },
+      {
+        "text": "Opposition leaders criticised the government for excessive spending, leading to the appointment of an Inquiry Committee.",
+        "kind": "verified"
+      }
+    ],
+    "has_dark_history": true,
+    "name": "Vidhana Soudha",
+    "tier": "M",
+    "sensitive": false,
+    "url": "https://en.wikipedia.org/wiki/Vidhana_Soudha",
+    "flags": []
+  },
+  "Attara Kacheri": {
+    "script": "What if a building could survive not just changing governments, but a plan to tear it down? That is the story of Attara Kacheri, the red-painted building standing opposite Vidhana Soudha. Its story began after a revolt in the Kingdom of Mysore in 1830. In 1831, the Wadiyar lost administrative powers, and several government departments were moved to Bangalore. But their temporary home, Tipu Sultan's summer palace, became too crowded and unsafe. So a new building was planned. Construction began in October 1864, and by April 1868, Attara Kacheri was ready. The name has an older story too. In 1699, Chikka Devaraja Wadiyar's ambassadors saw an eighteen-department system at the Mughal court. The Mysore government adopted a similar structure, giving rise to the name Attara Kacheri, meaning eighteen departments. But the building later faced a serious threat. In 1982, the government approved its demolition. A legal battle followed, and in 1985, the demolition plan was dropped. Today, the building remains home to the Karnataka High Court. A building nearly erased, still standing.",
+    "more_script": null,
+    "claims": [
+      {
+        "text": "Attara Kacheri stands opposite Vidhana Soudha.",
+        "kind": "verified"
+      },
+      {
+        "text": "A revolt occurred in many parts of the Kingdom of Mysore in 1830.",
+        "kind": "verified"
+      },
+      {
+        "text": "Construction of Attara Kacheri began in October 1864 and was completed in April 1868.",
+        "kind": "verified"
+      },
+      {
+        "text": "In 1699, Chikka Devaraja Wadiyar's ambassadors observed an eighteen-department system at the Mughal court.",
+        "kind": "verified"
+      },
+      {
+        "text": "In 1985, the proposal to demolish Attara Kacheri was dropped.",
+        "kind": "verified"
+      },
+      {
+        "text": "Attara Kacheri is the seat of the principal bench of the Karnataka High Court.",
+        "kind": "verified"
+      }
+    ],
+    "has_dark_history": true,
+    "name": "Attara Kacheri",
+    "tier": "M",
+    "sensitive": false,
+    "url": "https://en.wikipedia.org/wiki/Attara_Kacheri",
+    "flags": []
+  },
+  "Cubbon Park": {
+    "script": "Imagine a hundred acres of green appearing right in the middle of a growing city. That is Cubbon Park, officially called Sri Chamarajendra Park. Its story began in 1870, when Major General Richard Sankey created the park. At first, it was called Meade's Park, after Sir John Meade. But just three years later, the name changed to Cubbon Park, honouring Sir Mark Cubbon. Then came another twist. In 1927, during the Silver Jubilee of Sri Krishnaraja Wodeyar's rule, it was renamed Sri Chamarajendra Park, in memory of Sri Chamarajendra Wodeyar.",
+    "more_script": null,
+    "claims": [
+      {
+        "text": "Cubbon Park, officially called Sri Chamarajendra Park, was created in 1870 by Major General Richard Sankey.",
+        "kind": "verified"
+      },
+      {
+        "text": "The park was first named Meade's Park after Sir John Meade.",
+        "kind": "verified"
+      },
+      {
+        "text": "In 1873, it was renamed Cubbon Park after Sir Mark Cubbon.",
+        "kind": "verified"
+      },
+      {
+        "text": "In 1927, the park was renamed Sri Chamarajendra Park in memory of Sri Chamarajendra Wodeyar.",
+        "kind": "verified"
+      }
+    ],
+    "has_dark_history": false,
+    "name": "Cubbon Park",
+    "tier": "M",
+    "sensitive": false,
+    "url": "https://en.wikipedia.org/wiki/Cubbon_Park",
+    "flags": [
+      "length 90 words, target 180"
+    ]
+  },
+  "M G Road, Bengaluru": {
+    "script": "What looks like a busy city road has already lived several lives. This is M G Road. Before independence, it was called South Parade. Then, on 26 February 1948, it was renamed Mahatma Gandhi Road. Today, it runs from Trinity Circle to Anil Kumble Circle, packed with shops, restaurants, offices and theatres. And beneath it, the Metro began service in 2011.",
+    "more_script": null,
+    "claims": [
+      {
+        "text": "M G Road was known as South Parade in the pre-independence era.",
+        "kind": "verified"
+      },
+      {
+        "text": "It was renamed Mahatma Gandhi Road on 26 February 1948.",
+        "kind": "verified"
+      },
+      {
+        "text": "M G Road runs from Trinity Circle to Anil Kumble Circle.",
+        "kind": "verified"
+      },
+      {
+        "text": "The MG Road Metro station began services on 20 October 2011.",
+        "kind": "verified"
+      }
+    ],
+    "has_dark_history": false,
+    "name": "M G Road, Bengaluru",
+    "tier": "S",
+    "sensitive": false,
+    "url": "https://en.wikipedia.org/wiki/M_G_Road,_Bengaluru",
+    "flags": []
+  },
+  "Lal Bagh": {
+    "script": "What if a garden could tell the story of a kingdom, a changing city, and plants arriving from across the world? That is Lalbagh, rising through south Bengaluru.\n\nIts story begins in 1760. King Hyder Ali commissioned the garden, inspired by the Mughal Gardens that were popular in his time. His son, King Tipu Sultan, completed it and added to its collection by bringing trees and plants from several countries. So Lalbagh was never just about flowers. It was designed as a place where plants could be collected, grown, and exchanged.\n\nThen came a major turning point. After the British conquest of the Kingdom of Mysore in 1799, Lalbagh came under British control. Over the following decades, different superintendents managed the garden. In 1856, it was made into the Government Botanical Garden. Its purpose was not simply decoration. Hugh Cleghorn argued that it should help improve the use of indigenous plants, introduce useful exotic species, and exchange plant and seed material with other gardens.\n\nAnd the collection grew. A catalogue from 1861 included plants such as coffee, tea, macadamia nuts, rhododendrons, camellias, and bougainvilleas. Later, trees arrived from Africa, the Caribbean, and Yemen. Imagine walking through the garden and realizing that some of the plants had travelled enormous distances to get here.\n\nThen comes the structure most people remember. In 1890 and 1891, Lalbagh gained its central glasshouse for flower shows. Its design was modeled on London's Crystal Palace, with iron pillars cast by a company in Glasgow. The glasshouse later became one of the garden's defining sights.\n\nBut Lalbagh also carries older history beneath the greenery. The garden adjoins a rock associated with a watchtower constructed during the reign of Kempegowda II. And the Lalbagh Rock itself is described as one of the most ancient rock formations on earth, dating back about three billion years.\n\nToday, Lalbagh covers 240 acres and contains over a thousand species of plants, including many trees more than a hundred years old. It also shares Bengaluru's urban landscape with Cubbon Park as a home for wild birds and other wildlife.\n\nA garden that began with a king became a botanical collection, a public park, and a living record of changing Bengaluru. Look closely—the greenery has a very long memory.",
+    "more_script": "There is another layer to Lalbagh's story. Its name itself has more than one explanation. The prefix 'Lal' may refer to the colour red, connected to its original floral composition, but Lal also means 'beloved'. Even the name leaves room for debate.\n\nThe garden also became a place of experimentation and exchange. Under its botanical management, plants with economic value were introduced alongside ornamental species. Coffee, tea, cabbage, cauliflower, turnip, radish, rhubarb, celery, and kohlrabi were among the plants associated with this work. Trees came from places as far away as Africa, the Caribbean, and Yemen.\n\nAnd then there was the glasshouse. Its foundation stone was laid on 30 November 1889 by Prince Albert Victor. The building that followed was modeled on London's Crystal Palace. In 1935, it was extended using steel from the Mysore Iron and Steel Company at Bhadravathi.\n\nLalbagh was not always quiet, either. A menagerie and an aviary had been established in the 1860s. By 1914, a report described tigers, a rhinoceros, an orangutan, deer, emus, bears, and peacocks among the animals kept there. Following the plague, maintenance had deteriorated, and there had been proposals to close the menagerie and aviary.\n\nMuch later, another difficult chapter arrived. On 21 March 2020, Lalbagh closed to avoid public gatherings during the COVID-19 pandemic. The flower show planned for Independence Day that year was cancelled, as were the mango and jackfruit melas.\n\nYet the garden endured. Its plants, glasshouse, old trees, rock, and layers of history remain woven into south Bengaluru. Not bad for a garden that started in 1760.",
+    "claims": [
+      {
+        "text": "King Hyder Ali commissioned the building of Lalbagh in 1760.",
+        "kind": "verified"
+      },
+      {
+        "text": "King Tipu Sultan completed Lalbagh and added plants brought from several countries.",
+        "kind": "verified"
+      },
+      {
+        "text": "After the British conquest of the Kingdom of Mysore in 1799, Lalbagh came under British control.",
+        "kind": "verified"
+      },
+      {
+        "text": "In 1856, Lalbagh was made into the Government Botanical Garden.",
+        "kind": "verified"
+      },
+      {
+        "text": "The central glasshouse was added in 1890 and 1891 and was used for flower shows.",
+        "kind": "verified"
+      },
+      {
+        "text": "The glasshouse was modeled on London's Crystal Palace.",
+        "kind": "verified"
+      },
+      {
+        "text": "The Lalbagh Rock is described as one of the most ancient rock formations on earth, dating back about three billion years.",
+        "kind": "verified"
+      },
+      {
+        "text": "Lalbagh covers 240 acres and contains over a thousand species of plants.",
+        "kind": "verified"
+      },
+      {
+        "text": "The meaning of the prefix 'Lal' in Lalbagh is debated and may refer to the colour red or to the word meaning 'beloved'.",
+        "kind": "disputed"
+      },
+      {
+        "text": "The menagerie and aviary at Lalbagh had deteriorated following the plague, and there were proposals to close them.",
+        "kind": "verified"
+      },
+      {
+        "text": "Lalbagh closed on 21 March 2020 to avoid public gatherings during the COVID-19 pandemic.",
+        "kind": "verified"
+      }
+    ],
+    "has_dark_history": true,
+    "name": "Lal Bagh",
+    "tier": "L",
+    "sensitive": true,
+    "url": "https://en.wikipedia.org/wiki/Lal_Bagh",
+    "flags": []
+  },
+  "Ramanagara": {
+    "script": "What if the hills beside your road were once the backdrop for one of Bollywood’s most famous films? Welcome to Ramanagara. In 1975, the surrounding hills here became the setting for Sholay, and today they’re also known as the Ramagiri hills, or even the Sholay hills. But Ramanagara has a much older story. During the rule of the Mysorean emperor Tipu Sultan, the town was known as Shamsherabad or Ramserpuram. Later, in pre-independence times, it was called Closepet, after Sir Barry Close. And there’s another surprising connection: Ramanagara is famous for silk. It’s known as Silk Town and Silk City, and the silk produced here becomes an input for the famous Mysore Silk. Can you guess just how much silk passes through this town? About fifty tonnes of silk cocoons arrive here every day. Look toward those rocky hills and imagine a film crew turning this landscape into a movie set. Ramanagara has worn many names, but its hills became famous on the big screen.",
+    "more_script": null,
+    "claims": [
+      {
+        "text": "In 1975, the surrounding hills of Ramanagara were used for filming Sholay.",
+        "kind": "verified"
+      },
+      {
+        "text": "The surrounding hills are now called Ramagiri hills and also have the nickname Sholay hills.",
+        "kind": "verified"
+      },
+      {
+        "text": "During the rule of Tipu Sultan, the town was known as Shamsherabad or Ramserpuram.",
+        "kind": "verified"
+      },
+      {
+        "text": "Ramanagara is known as Silk Town and Silk City, and its silk is an input for Mysore Silk.",
+        "kind": "verified"
+      },
+      {
+        "text": "About fifty tonnes of silk cocoons arrive at Ramanagara every day.",
+        "kind": "verified"
+      }
+    ],
+    "has_dark_history": false,
+    "name": "Ramanagara",
+    "tier": "M",
+    "sensitive": false,
+    "url": "https://en.wikipedia.org/wiki/Ramanagara",
+    "flags": []
+  },
+  "Kaveri": {
+    "script": "What looks like a simple river crossing here has a much bigger story. This is the Kaveri, a river that runs for roughly eight hundred kilometres across southern India. Its journey begins high in the Western Ghats at Talakaveri, then the river travels east through Karnataka. And right around Srirangapatna, something remarkable happens: the Kaveri forms a river island. From here, the river keeps moving, eventually crossing into Tamil Nadu and flowing toward the Bay of Bengal. But the Kaveri is more than a waterway. For centuries, it has supported agriculture and helped sustain early kingdoms, including the Chola and Pandya kingdoms. Its waters are also deeply revered in Hinduism, where the river is personified as the goddess Kaveriamma. Can you guess why classical Tamil literature calls it Ponni, meaning “the golden one”? The name refers to the gold-colored fertile silt the river deposited along its delta during floods. There is another side to this story too. Sharing the Kaveri’s waters has been the subject of a long-standing dispute between Karnataka and Tamil Nadu. One river. History, faith, farming, and conflict—all flowing together.",
+    "more_script": null,
+    "claims": [
+      {
+        "text": "The Kaveri runs for roughly eight hundred kilometres.",
+        "kind": "verified"
+      },
+      {
+        "text": "The Kaveri forms a river island at Srirangapatna.",
+        "kind": "verified"
+      },
+      {
+        "text": "The river has supported agriculture in the region for centuries and historically supported the Chola and Pandya kingdoms.",
+        "kind": "verified"
+      },
+      {
+        "text": "In Hinduism, the Kaveri is revered as one of the seven sacred rivers and is personified as the goddess Kaveriamma.",
+        "kind": "verified"
+      },
+      {
+        "text": "Classical Tamil literature calls the Kaveri Ponni, meaning “the golden one,” referring to its gold-colored fertile silt.",
+        "kind": "verified"
+      },
+      {
+        "text": "Sharing the Kaveri's waters has been a long-standing dispute between Karnataka and Tamil Nadu.",
+        "kind": "verified"
+      }
+    ],
+    "has_dark_history": true,
+    "name": "Kaveri",
+    "tier": "M",
+    "sensitive": false,
+    "url": "https://en.wikipedia.org/wiki/Kaveri",
+    "flags": []
+  },
+  "Srirangapatna": {
+    "script": "What kind of place can change hands, become a kingdom's last line of defence, and still draw pilgrims centuries later? You're approaching Srirangapatna, an island town surrounded by the Kaveri.\n\nIts story begins with the river and the Ranganathaswamy Temple, which gives the town its name. The temple was consecrated around 984 CE, and the structure was later strengthened and improved. Today, Srirangapatna is an important Vaishnavite pilgrimage centre, with the deity known as Adi Ranga, the first of three Ranganatha temples on natural islands formed by the Kaveri.\n\nBut then the story takes a sharp turn.\n\nFor centuries, Srirangapatna was more than a pilgrimage centre. Under the Vijayanagara Empire, it became the seat of a major viceroyalty. When the empire began to decline, the rulers of Mysore wanted independence. Their first target? Srirangapatna.\n\nIn 1610, Raja Wodeyar I defeated Rangaraya, the viceroy of Srirangapatna. From then on, control of this fort became a powerful symbol of who truly controlled Mysore. Holding the 10-day Navaratri festival and controlling the fort were both seen as signs of sovereignty.\n\nAnd the fort would soon face an even bigger struggle.\n\nUnder Hyder Ali and Tipu Sultan, Srirangapatna became the capital of Mysore. The town then became the centre of major conflicts with the British. In 1792, the Treaty of Seringapatam was signed here, ending the Third Anglo-Mysore War.\n\nSeven years later came the final battle.\n\nIn 1799, Srirangapatna was the scene of the decisive battle of the Fourth Anglo-Mysore War. Tipu Sultan was killed within the fort. The victorious forces then plundered the town and ransacked his palace, while many objects connected with Tipu were shipped to England.\n\nYet much of the battlefield remains. The ramparts, the Water Gate, and the area where British prisoners were held can still be found here.\n\nLook around as you approach. Beneath this peaceful river island lies a place where faith, power, war, and empire collided.\n\nSrirangapatna was never just a stop on the road.",
+    "more_script": "Here's another layer to the story. Srirangapatna is not simply surrounded by the Kaveri; the river forms the island itself. The main river flows along its eastern side, while the Paschima Vaahini, another segment of the Kaveri, flows along the west.\n\nThat island also carries a religious tradition. Tradition holds that the islands formed in the Kaveri are consecrated to Sri Ranganathaswamy. Srirangapatna's temple is called Adi Ranga because it is the first of three important Ranganatha temples situated on natural Kaveri islands. The other two are at Shivanasamudra and Srirangam.\n\nBut the same island became a military stronghold. Srirangapatna was the fortress closest to the capital city of Mysore, and it was regarded as the last bastion and defence of the kingdom in case of invasion.\n\nThe conflict surrounding Tipu Sultan also left a darker mark. During his wars against the British, Kodavas, and Malabar rajas, entire communities of Nairs, Kodavas, and Mangalorean Catholics were rounded up and deported to Srirangapatna. They were held in bondage until Tipu's defeat by the British in 1799 brought their captivity to an end.\n\nAfter the final battle, the damage and loss did not end with the fighting. The victorious army plundered Seringapatam and ransacked Tipu's palace. Valuable objects, including personal possessions, clothing, a sword, and firearms, were shipped to England.\n\nToday, the monuments of this island town have been nominated for UNESCO World Heritage status, with the application pending on the tentative list.\n\nA river island became a temple centre, a capital, and a battlefield. That's Srirangapatna.",
+    "claims": [
+      {
+        "text": "Srirangapatna is an island town surrounded by the Kaveri.",
+        "kind": "verified"
+      },
+      {
+        "text": "The Ranganathaswamy Temple was consecrated around 984 CE and gives Srirangapatna its name.",
+        "kind": "verified"
+      },
+      {
+        "text": "Srirangapatna became the seat of a major viceroyalty under the Vijayanagara Empire.",
+        "kind": "verified"
+      },
+      {
+        "text": "Raja Wodeyar I defeated Rangaraya, the viceroy of Srirangapatna, in 1610.",
+        "kind": "verified"
+      },
+      {
+        "text": "Srirangapatna became the capital of Mysore under Hyder Ali and Tipu Sultan.",
+        "kind": "verified"
+      },
+      {
+        "text": "The Treaty of Seringapatam was signed in 1792 and ended the Third Anglo-Mysore War.",
+        "kind": "verified"
+      },
+      {
+        "text": "The decisive battle of the Fourth Anglo-Mysore War was fought at Srirangapatna in 1799, and Tipu Sultan was killed within the fort.",
+        "kind": "verified"
+      },
+      {
+        "text": "During Tipu Sultan's wars, entire communities of Nairs, Kodavas, and Mangalorean Catholics were deported to Srirangapatna and held in bondage.",
+        "kind": "verified"
+      },
+      {
+        "text": "The monuments of Srirangapatna have been nominated as a UNESCO World Heritage Site and the application is pending on UNESCO's tentative list.",
+        "kind": "verified"
+      }
+    ],
+    "has_dark_history": true,
+    "name": "Srirangapatna",
+    "tier": "L",
+    "sensitive": true,
+    "url": "https://en.wikipedia.org/wiki/Srirangapatna",
+    "flags": []
+  },
+  "Mysore Palace": {
+    "script": "What happens when a royal palace burns, taking a fifth of the building with it? The answer is waiting for you in Mysuru: Mysore Palace, also known as Amba Vilas Palace.\n\nThe story begins long before the palace you see today. The site was once part of a fort, and the first recorded palace there dates to 1638, when Kanthirava Narasaraja I rebuilt it after a lightning strike had destroyed the earlier structure. For a time, Srirangapatna was the de facto capital of the Kingdom of Mysore, and this palace was mainly a residence for the maharaja when he visited Mysore to worship at the nearby Chamundeshwari Temple.\n\nThen came Tipu Sultan. By the time he took power, the palace and surrounding town had fallen into neglect. In 1793, Tipu demolished the palace and parts of the fort's outer walls, using their materials to begin a new fortress called Nazarabad. After Tipu's death at the Battle of Srirangapatna in 1799, the British placed five-year-old Krishnaraja Wodeyar III on the throne and rebuilt the palace. Mysore then became the capital of the kingdom.\n\nBut the palace you see today has an even more dramatic beginning. On February 20th, 1897, a huge fire broke out just after the wedding ceremony of Jayalakshmi Ammanni, the eldest princess of Chamarajendra. Eight people died, and one-fifth of the building was destroyed. The durbar hall, armory, Sanskrit library and music room were among the losses.\n\nThe royal family moved to Jaganmohan Palace while Kempananjammanni Devi, regent for thirteen-year-old Krishnaraja Wodeyar IV, commissioned British architects Henry Irwin and E.W. Fritchley to create a new palace. Construction began in 1897 and finally ended in 1912.\n\nAnd look at what rose from those ashes: an Indo-Saracenic palace combining Indo-Islamic, Rajput, Hoysala and Gothic styles.\n\nToday, the palace contains a public museum alongside royal living quarters, and its grounds include gardens, Hindu temples and remnants of the original fort. More than four million people visit each year.\n\nA palace destroyed by fire became the palace millions come to see.",
+    "more_script": "Can you imagine thousands of people working on one palace for years? During the construction of the present Mysore Palace, hundreds of carvers and thousands of masons were involved. Scottish traveler William Murdoch visited in 1908, while the building was still taking shape, and described its carvings of local plants and animals in marble, granite and teak as extraordinary in technical skill. Four years later, construction was complete.\n\nBut the palace was never only a building. Its grounds have been connected with the Mysore Dasara festival since the early 19th century. The festival is held annually on the palace grounds and culminates in an elephant procession on Vijayadashami.\n\nThere is also a modern chapter to the story. In 1998, the Karnataka state government enacted the Mysore Palace Acquisition Act, acquiring ownership of the palace from the Wadiyar family. The family challenged the act in court, and the matter remains the subject of an ongoing legal dispute.\n\nThe name Amba Vilas has its own story too. It comes from Sanskrit. Ambā means mother and is an epithet for the Hindu goddess Durga. Local legend says Durga slew the demon king Mahishasura atop the nearby Chamundi Hills. Vilāsa refers to a residence of pleasure or luxury, a word commonly used for palace names in India during British rule.\n\nSo there are really several stories standing together here: a fort, royal power, destruction by fire, a massive reconstruction, an annual festival, and a continuing legal dispute. Mysore Palace isn't just something to look at. It's a place where centuries of history ended up under one roof.",
+    "claims": [
+      {
+        "text": "Mysore Palace is also known as Amba Vilas Palace.",
+        "kind": "verified"
+      },
+      {
+        "text": "The first recorded mention of the palace dates from 1638, when Kanthirava Narasaraja I rebuilt it after it was destroyed by a lightning strike.",
+        "kind": "verified"
+      },
+      {
+        "text": "In 1793, Tipu Sultan demolished the palace and parts of the outer walls of the fort and used the materials to begin construction of Nazarabad.",
+        "kind": "verified"
+      },
+      {
+        "text": "After Tipu Sultan's death at the Battle of Srirangapatna in 1799, the British installed five-year-old Krishnaraja Wodeyar III on the throne and rebuilt the palace.",
+        "kind": "verified"
+      },
+      {
+        "text": "On February 20th, 1897, a fire destroyed one-fifth of the palace and killed eight people.",
+        "kind": "verified"
+      },
+      {
+        "text": "Kempananjammanni Devi commissioned Henry Irwin and E.W. Fritchley to build the new palace.",
+        "kind": "verified"
+      },
+      {
+        "text": "Construction of the current palace began in 1897 and was completed in 1912.",
+        "kind": "verified"
+      },
+      {
+        "text": "The present palace combines Indo-Islamic, Rajput, Hoysala and Gothic architectural styles.",
+        "kind": "verified"
+      },
+      {
+        "text": "More than four million people visit Mysore Palace annually.",
+        "kind": "verified"
+      },
+      {
+        "text": "The Mysore Dasara festival has been annually held on the palace grounds since the early 19th century.",
+        "kind": "verified"
+      },
+      {
+        "text": "In 1998, the Karnataka state government enacted the Mysore Palace Acquisition Act, and the act remains the subject of an ongoing legal dispute.",
+        "kind": "verified"
+      },
+      {
+        "text": "Local legend says that the goddess Durga slew the demon king Mahishasura atop the nearby Chamundi Hills.",
+        "kind": "legend"
+      }
+    ],
+    "has_dark_history": true,
+    "name": "Mysore Palace",
+    "tier": "L",
+    "sensitive": false,
+    "url": "https://en.wikipedia.org/wiki/Mysore_Palace",
+    "flags": []
+  },
+  "Chamundi Hills": {
+    "script": "What if the hill you can see from Mysuru could tell you where the city's name came from? This is Chamundi Hills. Local legend says the asura Mahishasura, king of the city then known as Mysuru, was killed here by the goddess Chamundeshwari after a fierce battle. The story is so closely tied to the city that the old Kannada name \"Mahishooru\" literally means \"the village of Mahishasura.\" But there is another surprise waiting on the hill. A stone stairway of more than a thousand steps leads to the summit, built in sixteen fifty-nine by Dodda Devaraja Wodeyar. And about halfway up stands Nandi, Shiva's sacred vehicle, carved from a single piece of black granite. From the top, Mysuru spreads out below, with the palace and Karanji Lake visible in the distance. Yet this isn't only a place of pilgrimage. The hills also face plastic waste and pressure on local ecosystems, leading to conservation efforts. A legendary battle, a thousand steps, and a living landscape. That's Chamundi Hills.",
+    "more_script": null,
+    "claims": [
+      {
+        "text": "Chamundi Hills is located thirteen kilometres east of Mysuru.",
+        "kind": "verified"
+      },
+      {
+        "text": "Local legend says Mahishasura was killed by goddess Chamundeshwari after a fierce battle.",
+        "kind": "legend"
+      },
+      {
+        "text": "The old Kannada name Mahishooru literally means 'the village of Mahishasura.'",
+        "kind": "verified"
+      },
+      {
+        "text": "The stone stairway has more than one thousand steps and was constructed in sixteen fifty-nine by Dodda Devaraja Wodeyar.",
+        "kind": "verified"
+      },
+      {
+        "text": "Nandi is carved from a single piece of black granite.",
+        "kind": "verified"
+      },
+      {
+        "text": "Chamundi Hills faces plastic waste and pressure on local ecosystems.",
+        "kind": "verified"
+      }
+    ],
+    "has_dark_history": true,
+    "name": "Chamundi Hills",
+    "tier": "M",
+    "sensitive": false,
+    "url": "https://en.wikipedia.org/wiki/Chamundi_Hills",
+    "flags": []
+  }
+}
