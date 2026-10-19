@@ -3,7 +3,7 @@
 // check/parseReply are pure, so tests/test_live.mjs can drive them in node.
 
 const WIKI = 'https://en.wikipedia.org/w/api.php';
-const STOP = new Set(["I", "I'm", "I'd", "I'll", "I've", "OK", "Okay", "Oh", "Mr", "Mrs", "Sir",
+const STOP = new Set(["I", "I'm", "I'd", "I'll", "I've", "OK", "Okay", "Oh", "Mr", "Mrs", "Sir", "Histoway",
   "First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Eighth", "Ninth", "Tenth"]);
 
 export function parseReply(reply) {
