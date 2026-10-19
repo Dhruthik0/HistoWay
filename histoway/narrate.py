@@ -23,11 +23,14 @@ PROMPT, PROMPT_VERSION = _prompt("story.txt")
 JOURNEY, JOURNEY_VERSION = _prompt("journey.txt")
 LINK, LINK_VERSION = _prompt("link.txt")
 FACTCHECK, FACTCHECK_VERSION = _prompt("factcheck.txt")
-VERSIONS = {PROMPT_VERSION, JOURNEY_VERSION, LINK_VERSION}  # cache keys end in one of these
+ANSWERS, ANSWERS_VERSION = _prompt("answers.txt")
+VERSIONS = {PROMPT_VERSION, JOURNEY_VERSION, LINK_VERSION, ANSWERS_VERSION}  # cache keys end in one of these
 SEL, REV = CONFIG["select"], CONFIG["review"]
 SOURCE_CHARS = 7000  # per place: 3 places + the prompt stay under the Bridge's 32 KB request limit
 ALSO_CHARS = 2000    # per merged neighbour, taken out of the place's own share
 REQUEST_CHARS = 26000  # fact-check and callback batches are packed up to this much text
+QUESTIONS = {"dark": "Tell me the dark history of this place", "why": "Why is this place here?"}  # the Ask button's fixed ones
+ANSWER_WORDS = 75
 
 
 def story_key(p: dict) -> str:
@@ -331,6 +334,53 @@ def threads(picks: list[dict], origin: str, dest: str, provider: str) -> list[st
             cache_put("story", b["link_key"], s)
             print(f"   {s['name']}: {s['status']}" + (f" ({'; '.join(flags)})" if flags else ""), flush=True)
     return [x[2]["link_key"] for x in pairs]
+
+
+def answer_key(p: dict, q: str) -> str:
+    return f"{q}-{p['qid']}:{ANSWERS_VERSION}"
+
+
+def answers(picks: list[dict], provider: str) -> list[str]:
+    """Spoken answers to the Ask button's fixed QUESTIONS, from each place's own source text, CONFIG["batch"] places
+    per request. Cached, checked and reviewed like stories (IDs dark-<QID>, why-<QID>); a question the source cannot
+    answer is stored with status "none", so it is not asked again. Returns the keys."""
+    known, todo = _known(picks), []
+    for p in picks:
+        ds = gather(p)
+        text = "\n".join(d["text"] for d in ds)
+        for q in QUESTIONS:
+            if (s := cache_get("story", answer_key(p, q))) and s["status"] not in ("approved", "none"):
+                flags, notes = check(s, text, ANSWER_WORDS, known, dark=q == "dark")
+                cache_put("story", answer_key(p, q), settle(s | {"flags": flags, "notes": notes, "source_text": text}))
+        if any(cache_get("story", answer_key(p, q)) is None for q in QUESTIONS):
+            todo.append((p, ds, text))
+    for batch in _batches(todo, lambda x: len(x[2]), most=CONFIG["batch"] if provider == "bridge" else 1):
+        lines = []
+        for n, (p, _, _) in enumerate(batch, 1):
+            lines.append(f"{n}. {p['name']}" + "".join(f' REVIEWER NOTE on "{q}": {note}' for q in QUESTIONS
+                                                       if (note := cache_get("note", f"{q}-{p['qid']}"))))
+        instruction = Template(ANSWERS).substitute(places="\n".join(lines))
+        src = "\n\n".join(f"=== PLACE {n}: {p['name']} ===\n" + "\n\n".join(f"[{d['title']}]\n{d['text']}" for d in ds)
+                          for n, (p, ds, _) in enumerate(batch, 1))
+        print(f"-> answers for {', '.join(p['name'] for p, _, _ in batch)}", flush=True)
+        try:
+            items = {int(it.get("n", i + 1)): it for i, it in enumerate(extract_json(_paced(provider, instruction, src)))}
+        except (ValueError, json.JSONDecodeError, AttributeError) as e:
+            print(f"   bad reply ({e}); rerun to retry", flush=True)
+            continue
+        for n, (p, ds, text) in enumerate(batch, 1):
+            it = items.get(n) if isinstance(items.get(n), dict) else {}
+            for q in QUESTIONS:
+                if q not in it or cache_get("story", answer_key(p, q)):
+                    continue  # not answered this time (asked again next build), or already cached
+                line = it[q] if isinstance(it[q], str) and it[q].strip() else None
+                story = {"script": line or "", "more_script": None, "claims": [{}], "has_dark_history": q == "dark" and bool(line)}
+                flags, notes = check(story, text, ANSWER_WORDS, known, dark=q == "dark") if line else ([], [])
+                s = record(f"{p['name']}: {QUESTIONS[q]}", story, flags, notes, provider, ANSWERS_VERSION, ds, text)
+                s["status"] = s["status"] if line else "none"
+                cache_put("story", answer_key(p, q), s)
+                print(f"   {s['name']}: {s['status']}" + (f" ({'; '.join(flags)})" if flags else ""), flush=True)
+    return [answer_key(p, q) for p in picks for q in QUESTIONS]
 
 
 def factcheck(keys: list[str], provider: str) -> None:

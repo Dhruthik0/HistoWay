@@ -2,7 +2,7 @@
 
   python -m histoway build "Bangalore" "Mysore" [--llm gemini] [--dry]   route -> places -> stories -> pack
   python -m histoway review [--web]            stories held for review (--web: approve/regenerate in the browser)
-  python -m histoway approve ID [ID ...]       play these held stories after all (ID: a QID, intro-..., link-...)
+  python -m histoway approve ID [ID ...]       play these held stories after all (ID: a QID, intro-..., link-..., dark-..., why-...)
   python -m histoway redo ID [--note "..."]    regenerate one story, optionally telling the LLM what to fix
 
 Packs land in app/packs/<slug>/ (pack.json + audio/). Serve app/ and open it on the phone (see implementation.md).
@@ -40,6 +40,9 @@ def entry(p: dict, s: dict, out) -> dict:
     if not p["qid"].startswith(("intro-", "outro-")):
         line = narrate.again_line(p)
         e["again"] = {"script": line, "audio": audio(line)}
+        e["source"] = (s.get("source_text") or "")[:narrate.SOURCE_CHARS]  # for questions asked live
+        e["answers"] = {q: {"script": a["script"], "audio": audio(a["script"])} for q in narrate.QUESTIONS
+                        if narrate.playable(a := cache_get("story", narrate.answer_key(p, q)))}
     if (link := cache_get("story", p.get("link_key", ""))) and narrate.playable(link):
         e["link"] = {"after": link["after"], "script": link["script"], "audio": audio(link["script"])}
     return e
@@ -61,6 +64,7 @@ def build(origin: str, dest: str, provider: str, dry: bool) -> None:
         return
     sl, checker = slug(origin, dest), CONFIG["factcheck"]
     keys = narrate.write_stories(picks, f"{origin} to {dest} by road", origin, rt["total_km"], provider)
+    keys += narrate.answers(picks, provider)
     if checker:  # before the journey pieces, which only tease places whose stories will play
         narrate.factcheck(keys, checker)
     ends = narrate.journey(picks, origin, dest, sl, rt["total_km"], provider)
@@ -81,10 +85,10 @@ def build(origin: str, dest: str, provider: str, dry: bool) -> None:
         elif s:
             unchecked.append(p["name"])
     (out / "pack.json").write_text(json.dumps({
-        "pack_version": 2, "title": f"{origin} to {dest}", "origin": origin, "dest": dest,
+        "pack_version": 3, "title": f"{origin} to {dest}", "origin": origin, "dest": dest,
         "total_km": rt["total_km"], "voice": CONFIG["voice"], "route": {"points": rt["points"], "km": rt["km"]},
         "engine": {"minScore": CONFIG["select"]["min_score"], "skipPenalty": CONFIG["select"]["skip_penalty"]},
-        "live": {"prompt": narrate.PROMPT, "words": CONFIG["select"]["words"], "review": CONFIG["review"]},
+        "live": {"prompt": narrate.PROMPT, "ask_prompt": (ROOT / "prompts" / "ask.txt").read_text(), "words": CONFIG["select"]["words"], "review": CONFIG["review"]},
         "places": pack}, ensure_ascii=False))
     index = sorted({d.name for d in PACKS.iterdir() if (d / "pack.json").exists()})
     (PACKS / "index.json").write_text(json.dumps([{"id": d, "title": json.loads((PACKS / d / "pack.json").read_text())["title"]}

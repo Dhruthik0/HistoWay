@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from histoway import narrate, places  # noqa: E402
+from histoway import __main__ as cli, narrate, places  # noqa: E402
 from histoway.route import Projector  # noqa: E402
 
 # A straight road north from (12, 77), a point every 100 m for 30 km.
@@ -119,6 +119,36 @@ def test_pair_up():
 def test_pick_sections():
     text = "Intro.\n== Architecture ==\nA.\n== History ==\nH.\n== References ==\nR."
     assert places.pick_sections(text, 8000) == "Intro.\n== History ==\nH.\n== Architecture ==\nA."
+
+
+def test_answers_and_pack_entry():
+    """One batched reply: a null answer is stored as "none" (not asked again), a made-up year is held for review,
+    and the pack entry carries only playable answers plus the source text."""
+    store, asked = {}, []
+    fake_get = lambda kind, key: store.get((kind, key))  # noqa: E731
+    fake_put = lambda kind, key, value: store.__setitem__((kind, key), value)  # noqa: E731
+    reply = ('```json\n[{"n": 1, "dark": "Long ago, prisoners were deported from the fort.", "why": null},'
+             ' {"n": 2, "dark": null, "why": "In 1540 a king built it by the river."}]\n```')
+    src = {"Fort": "Kempe Gowda built the fort by the river. Prisoners were deported.", "Lake": "A lake by the river."}
+    real = narrate.cache_get, narrate.cache_put, narrate.gather, narrate._ask, cli.cache_get, cli.CONFIG["voice"]
+    narrate.cache_get, narrate.cache_put, cli.cache_get = fake_get, fake_put, fake_get
+    narrate.gather = lambda p: [{"title": p["name"], "url": None, "revid": 1, "text": src[p["name"]]}]
+    narrate._ask = lambda provider, instruction, s: asked.append(s) or reply
+    cli.CONFIG["voice"] = "device"
+    try:
+        picks = [place("Fort", 1, 10) | {"tier": "S", "side": "left"}, place("Lake", 2, 10) | {"tier": "S", "side": "left"}]
+        keys = narrate.answers(picks, "bridge")
+        narrate.answers(picks, "bridge")  # everything cached, nulls included: no second request
+        got = {k.split(":")[0]: store[("story", k)]["status"] for k in keys}
+        assert len(asked) == 1 and "=== PLACE 2: Lake ===" in asked[0], asked
+        assert got == {"dark-Fort": "ok", "why-Fort": "none", "dark-Lake": "none", "why-Lake": "needs_review"}, got
+        store[("story", keys[0])]["factcheck"] = {"problems": []}
+        e = cli.entry(picks[0], {"script": "S.", "more_script": None, "has_dark_history": True, "sources": [],
+                                 "source_text": "x" * 9000}, None)
+        assert e["answers"] == {"dark": {"script": "Long ago, prisoners were deported from the fort.", "audio": None}}, e
+        assert len(e["source"]) == narrate.SOURCE_CHARS
+    finally:
+        narrate.cache_get, narrate.cache_put, narrate.gather, narrate._ask, cli.cache_get, cli.CONFIG["voice"] = real
 
 
 if __name__ == "__main__":
