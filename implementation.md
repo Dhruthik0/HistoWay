@@ -490,4 +490,6 @@ On the phone, go to Set-up, turn on **Live stories**, and enter the Worker URL a
 - Not tested with a real microphone, and the Chrome speech path can't run headless. Both need a try on the phone.
 - Whisper records for a fixed 10 s (or until you tap); there is no silence detection.
 - Live answers that mention a sensitive word (Tipu, caste...) are never spoken, the same policy as live stories.
-- The "why" and "dark" answers have only been run with a stand-in LLM so far.
+- First real run (Bridge, Bangalore → Mysore, 2026-10-20): of the "dark" answers, 4 passed, 7 had no dark side in the source, and 14 were held. Of the "why" answers, 8 passed, 2 had nothing in the source, and 19 were held.
+  - Stories: 7 of 34 passed. 10 were held at least partly by the "sensitive topic (tipu)" rule, which by design always needs a person.
+  - Most other holds come from the fact checker (ChatGPT checking ChatGPT): it still rates small embellishments as major ("for generations", "suddenly", an invented motive).
