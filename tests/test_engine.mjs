@@ -78,6 +78,35 @@ e = new Engine(pack([place('A', 2)]));
 for (let t = 0; t < 90; t++) assert.equal(e.update({ lat: 12 + 2 / 110.57, lon: 77.02, accuracy: 5, speed: 16, t: t * 1000 }), null);
 assert.ok(e.offRoute);
 
+// Second trip with "again" lines: one short reminder per place, and only a short gap after it.
+const withAgain = (qid, at) => ({ ...place(qid, at), again: { script: `On your left again: ${qid}.` } });
+e = new Engine(pack([withAgain('A', 2), withAgain('B', 2.4)]), new Set(['A', 'B']));
+log = drive(e, { durS: 3, toKm: 6 });
+assert.deepEqual(log.map(x => x.qid), ['A', 'B']);
+assert.ok(log[1].t - log[0].t < 30 * 1000, 'reminders use the short gap');
+assert.ok(e.played.has('A') && e.played.has('B'));
+
+// First trip with "again" lines in the pack: each place is told once, never followed by its own reminder.
+e = new Engine(pack([{ ...withAgain('A', 2), late_km: 5 }, withAgain('B', 6)]));
+assert.deepEqual(drive(e, { durS: 3, toKm: 10 }).map(x => x.qid), ['A', 'B']);
+
+// Skip tuning: skipping a temple drops a later temple that was only just above min_score; a fort still plays.
+const scored = (qid, at, types, score) => ({ ...place(qid, at), types, score });
+e = new Engine({ ...pack([scored('T1', 2, ['hindu temple'], 9), scored('T2', 6, ['hindu temple'], 7), scored('F', 10, ['fort'], 7)]),
+  engine: { minScore: 6, skipPenalty: 2 } });
+log = drive(e, { outcome: 'skipped', durS: 5 });
+assert.deepEqual(log.map(x => x.qid), ['T1', 'F']);
+assert.ok(e.missed.has('T2'));
+
+// A place's own late_km (district lines: 5 km) beats its tier's.
+e = new Engine(pack([place('X', 1), { ...place('R', 1.5, 'S'), late_km: 5 }]));
+log = drive(e, { durS: 120, toKm: 8 });
+assert.deepEqual(log.map(x => x.qid), ['X', 'R']);
+
+// The opening (gap_s 10) does not push the first city story out of its window.
+e = new Engine(pack([{ ...place('intro-x', 0), gap_s: 10 }, place('H', 0.3, 'S')]));
+assert.deepEqual(drive(e, { durS: 30, kmh: 30, toKm: 2 }).map(x => x.qid), ['intro-x', 'H']);
+
 // Bad accuracy is ignored.
 assert.equal(new Engine(pack([place('A', 0.1)])).update({ lat: 12, lon: 77, accuracy: 500, speed: 10, t: 0 }), null);
 

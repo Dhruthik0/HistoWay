@@ -8,7 +8,9 @@ export const DEFAULTS = {
   jamKmh: 5, jamS: 120,               // slower than this for this long = jam or stop: start nothing new
   leadS: { S: 20, M: 30, L: 45 },     // start this many seconds of driving before the place
   minLeadKm: 0.15,
-  lateKm: { S: 0.2, M: 0.5, L: 2 },   // still worth telling this far past the place; after that it is missed
+  lateKm: { S: 0.2, M: 0.5, L: 2 },   // still worth telling this far past the place (a place's late_km wins)
+  againGapS: 10,                      // silence after a one-line "on your left again"
+  minScore: -Infinity, skipPenalty: 0, // from the pack: each Skip lowers later places sharing a type with it
 };
 
 const KM_PER_DEG = 110.57;
@@ -54,13 +56,15 @@ export class Route {
 
 export class Engine {
   constructor(pack, told = new Set(), opts = {}) {
-    this.o = { ...DEFAULTS, ...opts };
+    this.o = { ...DEFAULTS, ...pack.engine, ...opts };
     this.route = new Route(pack.route.points, pack.route.km);
     this.places = [...pack.places].sort((a, b) => a.km - b.km);
     this.told = told;          // qids already told on any trip (persisted by the app)
     this.missed = new Set();   // passed without telling on this trip
+    this.played = new Set();   // started on this trip, as a story or a one-line reminder
+    this.skips = {};           // type -> Skip presses on this trip
     this.km = null; this.t = null; this.speed = 0;  // speed in km/s
-    this.playing = null; this.lastEnd = -Infinity;
+    this.playing = null; this.quietUntil = -Infinity;
     this.offSince = null; this.offRoute = false; this.stoppedSince = null;
   }
 
@@ -89,19 +93,27 @@ export class Engine {
   }
 
   next(t) {
-    if (this.playing || this.km == null || t - this.lastEnd < this.o.gapS * 1000) return null;
+    if (this.playing || this.km == null || t < this.quietUntil) return null;
     if (this.stoppedSince != null && t - this.stoppedSince > this.o.jamS * 1000) return null;
     for (const p of this.places) {
       if (p.km - this.km > 5) break;  // sorted by km: nothing further is due yet
-      if (this.told.has(p.qid) || this.missed.has(p.qid)) continue;
-      if (p.km < this.km - this.o.lateKm[p.tier]) { this.missed.add(p.qid); continue; }
-      if (p.km - this.km <= Math.max(this.o.minLeadKm, this.speed * this.o.leadS[p.tier])) {
-        this.playing = p;
-        return p;
+      const told = this.told.has(p.qid);
+      if (this.missed.has(p.qid) || this.played.has(p.qid) || (told && !p.again)) continue;
+      if (p.km < this.km - (p.late_km ?? this.o.lateKm[told ? 'S' : p.tier])) { this.missed.add(p.qid); continue; }
+      if (!told && p.score != null && this.penalty(p) > 0 && p.score - this.penalty(p) < this.o.minScore) {
+        this.missed.add(p.qid);
+        continue;
+      }
+      if (p.km - this.km <= Math.max(this.o.minLeadKm, this.speed * this.o.leadS[told ? 'S' : p.tier])) {
+        this.played.add(p.qid);
+        this.playing = told ? { ...p, reminder: true } : p;
+        return this.playing;
       }
     }
     return null;
   }
+
+  penalty(p) { return (p.types ?? []).reduce((sum, ty) => sum + (this.skips[ty] ?? 0), 0) * this.o.skipPenalty; }
 
   busy(place) { this.playing = place; }  // replay / tell me more: hold off new stories
 
@@ -109,8 +121,9 @@ export class Engine {
   storyEnded(t, outcome) {
     const p = this.playing;
     if (p && outcome !== 'interrupted') this.told.add(p.qid);
+    if (p && outcome === 'skipped' && !p.reminder) for (const ty of p.types ?? []) this.skips[ty] = (this.skips[ty] ?? 0) + 1;
     this.playing = null;
-    this.lastEnd = t;
+    this.quietUntil = t + (p?.gap_s ?? (p?.reminder ? this.o.againGapS : this.o.gapS)) * 1000;  // gap_s: the opening is a lead-in
     return p;
   }
 

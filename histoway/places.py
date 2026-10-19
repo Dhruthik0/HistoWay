@@ -11,6 +11,7 @@ from .route import KM_PER_DEG_LAT, Projector, dist_km
 
 SEL = CONFIG["select"]
 SEGMENT_KM = 20
+REGION_STEP_KM = 5
 SPARQL = """SELECT ?item ?coord ?title ?links (GROUP_CONCAT(DISTINCT ?tl; separator="|") AS ?types) WHERE {
   SERVICE wikibase:box { ?item wdt:P625 ?coord .
     bd:serviceParam wikibase:cornerSouthWest "Point(%f %f)"^^geo:wktLiteral ;
@@ -92,18 +93,61 @@ def _rivers(s: float, w: float, n: float, e: float) -> list[dict]:
         return []
 
 
-def _fill_rivers(found: dict) -> None:
-    """OSM gives the river's QID only; get its sitelinks and English article from Wikidata."""
-    qids = [q for q, p in found.items() if p.get("crossing")]
+def _enwiki(qids: list[str]) -> dict[str, tuple[str, int]]:
+    """QID -> (English Wikipedia title, sitelink count), for items with an article and at least min_sitelinks."""
+    out = {}
     for i in range(0, len(qids), 50):
         ents = get_json("https://www.wikidata.org/w/api.php", {"action": "wbgetentities", "ids": "|".join(qids[i:i + 50]),
                                                                 "props": "sitelinks", "format": "json"})["entities"]
         for qid in qids[i:i + 50]:
             links = ents.get(qid, {}).get("sitelinks", {})
             if "enwiki" in links and len(links) >= SEL["min_sitelinks"]:
-                found[qid] |= {"name": links["enwiki"]["title"], "links": len(links)}
-            else:
-                del found[qid]
+                out[qid] = (links["enwiki"]["title"], len(links))
+    return out
+
+
+def _fill_rivers(found: dict) -> None:
+    """OSM gives the river's QID only; get its English article from Wikidata."""
+    known = _enwiki([q for q, p in found.items() if p.get("crossing")])
+    for qid in [q for q, p in found.items() if p.get("crossing")]:
+        if qid in known:
+            found[qid] |= {"name": known[qid][0], "links": known[qid][1]}
+        else:
+            del found[qid]
+
+
+def _region(lat: float, lon: float, zoom: int) -> str | None:
+    """QID of the district (zoom 6) or state (zoom 5) at a point, from Nominatim; None where OSM has none."""
+    r = get_json("https://nominatim.openstreetmap.org/reverse", {"lat": round(lat, 4), "lon": round(lon, 4), "zoom": zoom,
+                                                                 "format": "jsonv2", "extratags": 1})
+    want = "state_district" if zoom == 6 else "state"
+    return r.get("extratags", {}).get("wikidata") if r.get("addresstype") == want else None
+
+
+def regions(rt: dict, skip: set[str]) -> list[dict]:
+    """District and state lines the road crosses, as places at the crossing km. Sampled every REGION_STEP_KM,
+    then bisected to under 0.5 km. The starting region is never a crossing; each region is told once per trip."""
+    proj = Projector(rt["points"], rt["km"])
+    at = lambda k, zoom: _region(*proj.point_at(k), zoom)  # noqa: E731
+    ks = [*np.arange(0, rt["total_km"], REGION_STEP_KM), rt["total_km"]]
+    out: dict[str, dict] = {}
+    for zoom, kind, tier in ((5, "state", "M"), (6, "district", "S")):
+        prev = start = at(ks[0], zoom)
+        for lo, hi in zip(ks, ks[1:]):
+            here = at(hi, zoom)
+            if here == prev:
+                continue
+            a, b = lo, hi
+            while b - a > 0.5:
+                mid = (a + b) / 2
+                a, b = (mid, b) if at(mid, zoom) == prev else (a, mid)
+            new = at(b, zoom)
+            if new and new != start and new not in skip and new not in out:
+                out[new] = {"qid": new, "km": round(float(b), 2), "off_km": 0.0, "side": "crossing", "region": kind,
+                            "types": [kind], "lat": None, "lon": None, "tier": tier}
+            prev = here
+    names = _enwiki(list(out))
+    return [p | {"name": names[q][0], "links": names[q][1]} for q, p in out.items() if q in names]
 
 
 def article_kb(titles: list[str]) -> dict[str, float]:

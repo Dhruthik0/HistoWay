@@ -1,6 +1,9 @@
 # Histoway settings. Distances are km unless named _m.
 llm = "bridge"                      # bridge | gemini | grok | ollama   (override: --llm gemini)
 voice = "edge:en-IN-NeerjaNeural"   # stories pre-rendered to MP3 on the laptop; "device" = phone TTS only
+                                    # "deepgram:aura-2-thalia-en" = Deepgram Aura (needs DEEPGRAM_API_KEY; paid after the signup credit)
+factcheck = "bridge"                # second LLM pass comparing each story with its source; a provider name, or "" for off.
+                                    # A different provider than llm catches more. On the Bridge it roughly doubles the requests.
 batch = 3                           # places per LLM request; the Bridge allows ~100-200 requests a day
 pace_s = 20                         # gap between LLM requests (fast bursts trip ChatGPT's throttle)
 
@@ -33,6 +36,8 @@ share_L = 0.15           # top share of picks get the long (L) story with "tell 
 share_M = 0.35           # next share get M; the rest S
 words = { S = 60, M = 180, L = 400 }
 more_words = 250
+skip_penalty = 2.0       # phone: each Skip lowers, for the rest of that journey, the score of places sharing a type with it;
+                         # places that fall below min_score are dropped
 
 # Added to the score when a Wikidata type ("instance of") contains the key ("=key": equals it).
 [select.type_bonus]

@@ -80,6 +80,40 @@ def test_check():
     tipu = {"script": "Tipu's soldiers marched past. " + "word " * 50, "claims": [{}]}
     assert any(f.startswith("sensitive") for f in narrate.check(tipu, "Tipu marched.", 60)[0])
     assert narrate.check({"script": "Short.", "claims": [{}]}, src, 60)[1]  # length is a note, not a flag
+    link = {"script": "Remember Kempe Gowda's fort?", "claims": [{}]}
+    assert narrate.check(link, src, 25, dark=False)[0] == []  # a callback line need not repeat the dark side
+
+
+def test_regions():
+    """District lines found by sampling, then bisected; the starting district is not a crossing; a region
+    re-entered later is told once."""
+    real = places._region, places._enwiki
+    line = lambda lat, lon, zoom: (("QKA" if zoom == 5 else "QD1" if lat < 12 + 12.3 / 110.57 else "QD2" if lat < 12 + 20 / 110.57  # noqa: E731
+                                    else "QD1"))
+    places._region, places._enwiki = line, lambda qids: {q: (q + " district", 9) for q in qids}
+    try:
+        got = places.regions({"points": POINTS, "km": KM, "total_km": 30.0}, skip=set())
+    finally:
+        places._region, places._enwiki = real
+    assert [(r["qid"], r["region"], r["tier"]) for r in got] == [("QD2", "district", "S")], got
+    assert abs(got[0]["km"] - 12.3) < 0.5, got[0]["km"]
+
+
+def test_again_and_batches():
+    assert narrate.again_line({"name": "Kaveri", "crossing": True}) == "Crossing the Kaveri again."
+    assert narrate.again_line({"name": "Lalbagh", "off_km": 1.2, "side": "left"}) == "On your left again: Lalbagh."
+    assert narrate._batches(["a" * 10, "b" * 10, "c" * 30000, "d"], len) == [["a" * 10, "b" * 10], ["c" * 30000], ["d"]]
+
+
+def test_pair_up():
+    s = lambda script, src: {"script": script, "source_text": src}  # noqa: E731
+    told = [({"name": "Lalbagh", "qid": "Q1"}, s("Long ago, Hyder Ali and his son Tipu planted roses here.", "Hyder Ali, Tipu")),
+            ({"name": "Cubbon Park", "qid": "Q2"}, s("The park was planned by Richard Sankey.", "Richard Sankey")),
+            ({"name": "Srirangapatna", "qid": "Q3"}, s("This island was where Tipu made his last stand.", "Tipu Sultan died")),
+            ({"name": "Gumbaz", "qid": "Q4"}, s("Here lies Tipu, next to Srirangapatna.", "tomb of Tipu"))]
+    pairs = narrate.pair_up(told, "Lalbagh Cubbon Park Srirangapatna Gumbaz Bangalore Mysore")
+    assert [(a["qid"], b["qid"], shared) for a, _, b, _, shared in pairs] == [("Q1", "Q3", ["Tipu"])], pairs
+    # Gumbaz shares Tipu with Srirangapatna, but already names it, so no callback line is needed
 
 
 def test_pick_sections():

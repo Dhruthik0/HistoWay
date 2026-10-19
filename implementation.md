@@ -253,11 +253,12 @@ PROVIDERS = {"bridge": bridge, "gemini": partial(openai_compat, ...), "grok": ..
 **Project layout, deliberately small:**
 ```
 Histoway/
-  histoway/ __main__.py common.py (config, SQLite cache, HTTP) llm.py route.py places.py (incl. sources) narrate.py (incl. MP3s)
-  prompts/story.txt
+  histoway/ __main__.py common.py (config, SQLite cache, HTTP) llm.py route.py places.py (incl. sources) narrate.py (incl. MP3s) review.py
+  prompts/ story.txt journey.txt link.txt factcheck.txt
   config.toml   include.txt  exclude.txt   (the two lists are optional)
-  app/ index.html app.js engine.js sw.js manifest.webmanifest icon.svg   packs/ (generated)
-  tests/ test_pipeline.py test_engine.mjs
+  app/ index.html app.js engine.js live.js sw.js manifest.webmanifest icon.svg   packs/ (generated)
+  worker/ worker.js wrangler.toml   (Phase 2 live-story proxy)
+  tests/ test_pipeline.py test_engine.mjs test_live.mjs
 ```
 *(As built in Phase 1: sources.py and db.py were folded into places.py and common.py. The simulator drives along the pack's own route; any recorded GPX can be replayed too, so no fixture file is needed.)*
 The PWA uses plain JS with no build step and no framework.
@@ -297,7 +298,7 @@ The PWA uses plain JS with no build step and no framework.
 6. GPX simulator mode in the PWA.
 7. **Drive test:** Bangalore → Mysore, for real.
 
-**Phase 2 — Make it feel like one story (about 2–3 weeks)**
+**Phase 2 — Make it feel like one story (about 2–3 weeks)** — built 2026-10-20, see *Phase 2: how to run it* below; not yet run against a real LLM (the Bridge was down) or deployed (the Worker)
 - Journey threads, region and river transitions, and the opening and closing stories
 - Live fallback (Wikipedia nearby-places search plus Gemini or Grok), through a Cloudflare Worker proxy
 - Deepgram MP3 pre-rendering
@@ -422,7 +423,42 @@ Open `http://localhost:8765/` on the phone → Set-up → choose the pack → **
 
 **Known limits of this MVP:**
 - The screen must stay on (Wake Lock); a PWA loses GPS when the screen locks.
-- Opening/closing stories, "on your left again" lines, and live fallback are Phase 2.
 - If a phone call pauses a story, press Resume.
 - River crossings come from Overpass, whose public servers are often overloaded; the build warns and continues without them.
 - Gemini and Grok are wired in but untested: no API keys on this laptop.
+
+---
+
+## Phase 2: how to run it
+
+**Building a pack** works as in Phase 1, with these additions:
+- **District and state lines** come from Nominatim's reverse geocoder: the route is sampled every 5 km, and each change is narrowed down to within 0.5 km. Each line you cross becomes a short story about the new district or state. The district or state you start in is not announced.
+- **Opening and closing pieces:** about 90 words as you set off, and about 120 words as you arrive, from the origin's and destination's Wikipedia articles plus the first lines of the main places. This takes one extra request per trip.
+- **Callbacks:** when a later story names the same person, dynasty or event as an earlier one (Tipu, the Wadiyars), the LLM writes one linking line ("Remember...?"), or declines if the link is weak. The phone plays it before the later story, but only if you actually heard the earlier one. These take about one request per 8 pairs.
+- **"Again" lines:** every place also gets a one-line reminder ("On your left again: Lal Bagh."). On a later trip, places you have already heard play only that line. Press **Tell me more** after it to hear the full story again.
+- **Fact check:** `factcheck = "bridge"` in `config.toml` sends every story, with its source text, to a second LLM pass. Any problem it reports holds the story for review. While a fact checker is set, unchecked stories stay out of the pack; rerunning the build finishes them. A different provider than `llm` catches more (`factcheck = "gemini"` once `GEMINI_API_KEY` is set). On the Bridge, the fact check roughly doubles the requests, so set `factcheck = ""` for long trips like Leh.
+- **Review screen:** `.venv/bin/python -m histoway review --web` serves http://127.0.0.1:8766/ (laptop only). It shows held stories with their flags, the fact check's problems and the source text, with **Approve** and **Regenerate** (with a note to the LLM). Then build again. Story IDs are QIDs, `intro-<trip>`, `outro-<trip>` or `link-<QID>-<QID>`. Reviewer notes only reach place stories.
+- **Deepgram voice (optional, paid after the signup credit):** set `voice = "deepgram:aura-2-thalia-en"` and `DEEPGRAM_API_KEY`. Text is sent in chunks of up to 2,000 characters (Deepgram's limit) and the MP3s are joined. This is untested because there is no key on this laptop; check the voice list at https://developers.deepgram.com/docs/tts-models.
+
+**On the phone:**
+- **Skip tuning:** each **Skip** lowers the score of later places that share a Wikidata type with the skipped one, by `skip_penalty` (2.0) per skip, for the rest of that journey. Places that fall below `min_score` are dropped quietly.
+- **Live stories (opt-in):** when you have been more than 500 m off the planned route for a minute, the phone looks up Wikipedia's nearby articles (your position rounded to about 100 m) and picks the best one you haven't heard. It asks the LLM through your Cloudflare Worker, runs the same rule checks as the laptop (anything flagged is not played), and speaks the story in the phone's own voice. It tries at most once every 3 minutes, and only when online.
+
+**Setting up the Worker (once, free Cloudflare account):**
+```
+cd worker
+npx wrangler login
+npx wrangler secret put LLM_KEY      # your Gemini API key
+npx wrangler secret put APP_TOKEN    # any long random string, e.g. from: python3 -c "import secrets; print(secrets.token_urlsafe(24))"
+npx wrangler deploy                  # prints https://histoway-live.<you>.workers.dev
+```
+On the phone, go to Set-up, turn on **Live stories**, and enter the Worker URL and the same token. The Worker only accepts requests that carry the token, and only from `http://localhost:8765` (CORS; see `ALLOW_ORIGIN` in `wrangler.toml`). It is a thin proxy: the prompt and the checks run on the phone, and the key never leaves Cloudflare.
+
+**Tests:** `.venv/bin/python tests/test_pipeline.py`, `node tests/test_engine.mjs` and `node tests/test_live.mjs` (no network). The live check in `app/live.js` mirrors `narrate.check`, so change both together; `test_live.mjs` runs the same cases as the Python test.
+
+**Known limits of Phase 2:**
+- Not yet run against a real LLM: the Bridge would not start on 2026-10-20 (`No module named ai_bridge` in its venv). The pipeline was run end to end with a stand-in LLM, and the phone app was driven in headless Chrome.
+- Live stories cover detours only. A trip with no pack at all is not supported yet.
+- Live stories use the phone's voice, because Neerja (edge-tts) runs only on the laptop.
+- Callbacks are found by matching capitalised names in both stories and both sources, minus a list of generic words in `narrate._GENERIC`. They miss links that use different wording ("the Sultan" vs "Tipu").
+- Fact-checking with the same provider that wrote the story is weaker than using a second provider.

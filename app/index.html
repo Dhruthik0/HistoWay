@@ -70,7 +70,14 @@
     <div class="row" style="margin-top:8px"><button id="sim" disabled>Simulate route</button>
       <label class="row" style="margin:0">or replay a GPX track <input id="gpx" type="file" accept=".gpx,application/gpx+xml"></label></div>
 
-    <label>Places already heard are never repeated</label>
+    <label>Live stories when you leave the planned route (needs mobile data)</label>
+    <div class="row"><label class="row" style="margin:0;color:inherit"><input type="checkbox" id="liveOn"> On</label></div>
+    <div class="row" style="margin-top:6px"><input id="liveUrl" type="url" placeholder="Worker URL" aria-label="Worker URL" style="flex:1">
+      <input id="liveToken" type="password" placeholder="Worker token" aria-label="Worker token" style="flex:1"></div>
+    <div class="muted">Off by default. When on, your position rounded to about 100 m goes to Wikipedia, and the name and article of a
+      nearby place go to your Cloudflare Worker and its LLM. Live stories use the phone's own voice.</div>
+
+    <label>Places already heard are never repeated (you hear one "again" line instead)</label>
     <div class="row"><button id="resetTold">Forget what I've heard</button><span class="muted" id="toldCount"></span></div>
   </details></div>
 </main>

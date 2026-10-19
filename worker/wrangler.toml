@@ -1,0 +1,9 @@
+# Deploy: cd worker && npx wrangler deploy   (free Cloudflare account; see implementation.md, "Phase 2: how to run it")
+name = "histoway-live"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+
+[vars]
+LLM_URL = "https://generativelanguage.googleapis.com/v1beta/openai"
+LLM_MODEL = "gemini-3-flash-preview"   # check https://ai.google.dev/gemini-api/docs/models before relying on it
+ALLOW_ORIGIN = "http://localhost:8765"  # where the phone opens the app

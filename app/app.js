@@ -1,5 +1,6 @@
 // Histoway phone app: pack download, GPS or simulator -> engine -> audio. Plain JS, no build step.
 import { Engine } from './engine.js';
+import { liveStory } from './live.js';
 
 const $ = id => document.getElementById(id);
 const store = {  // localStorage can throw (private mode, blocked storage); the app still works without it
@@ -11,6 +12,8 @@ let pack = null, packBase = '', engine = null;
 let watchId = null, simTimer = null, simClock = null, wakeLock = null;
 let current = null;  // {place, which: 'audio'|'more_audio'} being played (or last played)
 let paused = false, playToken = 0;
+let liveBusy = false, liveNextAt = 0, liveTried = new Set();
+const LIVE_GAP_MS = 3 * 60 * 1000;  // at most one live attempt every 3 minutes
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 const audio = new Audio();
 const told = () => store.get('told', {});
@@ -88,7 +91,8 @@ function speakDevice(text, done) {  // fallback when a story has no MP3
   speechSynthesis.cancel();
   const voices = speechSynthesis.getVoices(), lang = v => v.lang.replace('_', '-');
   const voice = voices.find(v => lang(v) === 'en-IN') || voices.find(v => lang(v).startsWith('en'));
-  const parts = text.match(/[^.!?]+[.!?]+["')\]]*\s*|[^.!?]+$/g) || [text];  // Chrome cuts long utterances off
+  const parts = (text.match(/[^.!?]+[.!?]+["')\]]*\s*|[^.!?]+$/g) || [text])  // Chrome cuts long utterances off
+    .reduce((out, s) => (out.length && /\b[A-Z]\.\s*$/.test(out.at(-1)) ? out[out.length - 1] += s : out.push(s), out), []);  // "K. R. Market"
   parts.forEach((s, i) => {
     const u = new SpeechSynthesisUtterance(s.trim());
     if (voice) u.voice = voice;
@@ -98,27 +102,42 @@ function speakDevice(text, done) {  // fallback when a story has no MP3
   });
 }
 
+function playOne(file, text) {  // resolves when this MP3 (or, without one, the device voice) has finished
+  return new Promise(async resolve => {
+    if (file) {
+      try {
+        const res = (await caches.match(packBase + file)) || (await fetch(packBase + file));
+        audio.src = URL.createObjectURL(await res.blob());
+        audio.onended = resolve;
+        await audio.play();
+        return;
+      } catch (e) { console.warn('mp3 failed, using device voice', e); }
+    }
+    speakDevice(text, resolve);
+  });
+}
+
+// which: 'audio' (the story) or 'more_audio'. A reminder plays its one line; a story whose earlier, linked
+// story was heard starts with the callback line ("Remember Tipu, from Lalbagh?").
 async function play(place, which = 'audio') {
   stopAudio();
   const token = playToken;
   current = { place, which };
   paused = false;
   engine.busy(place);
-  $('now').textContent = (which === 'more_audio' ? 'More: ' : '') + place.name;
+  $('now').textContent = (place.reminder ? 'Again: ' : which === 'more_audio' ? 'More: ' : '') + place.name;
   if ('mediaSession' in navigator) navigator.mediaSession.metadata = new MediaMetadata({ title: place.name, artist: 'Histoway', album: pack.title });
   setButtons();
   await chime();
   if (token !== playToken) return;  // skipped or replaced during the chime
-  const file = place[which];
-  if (file) {
-    try {
-      const res = (await caches.match(packBase + file)) || (await fetch(packBase + file));
-      audio.src = URL.createObjectURL(await res.blob());
-      await audio.play();
-      return;
-    } catch (e) { console.warn('mp3 failed, using device voice', e); }
+  const parts = place.reminder ? [[place.again.audio, place.again.script]]
+    : which === 'more_audio' ? [[place.more_audio, place.more_script]]
+    : [...(place.link && engine.told.has(place.link.after) ? [[place.link.audio, place.link.script]] : []), [place.audio, place.script]];
+  for (const [file, text] of parts) {
+    await playOne(file, text);
+    if (token !== playToken) return;
   }
-  speakDevice(which === 'audio' ? place.script : place.more_script, () => finished('completed'));
+  finished('completed');
 }
 
 function stopAudio() {
@@ -140,14 +159,13 @@ function finished(outcome) {
   $('now').textContent = ' ';
   setButtons();
 }
-audio.onended = () => finished('completed');
 
 function setButtons() {
   const playing = !!engine?.playing;
   $('pause').disabled = $('skip').disabled = !playing;
   $('pause').textContent = paused ? 'Resume' : 'Pause';
   $('replay').disabled = !current;
-  $('more').disabled = !current?.place.more_script;
+  $('more').disabled = !(current?.place.reminder || current?.place.more_script);
 }
 
 $('pause').onclick = () => {
@@ -157,7 +175,10 @@ $('pause').onclick = () => {
 };
 $('skip').onclick = () => { stopAudio(); finished('skipped'); };
 $('replay').onclick = () => current && play(current.place, current.which);
-$('more').onclick = () => current?.place.more_script && play(current.place, 'more_audio');
+$('more').onclick = () => {  // after a reminder line: the full story again
+  if (current?.place.reminder) play({ ...current.place, reminder: false });
+  else if (current?.place.more_script) play(current.place, 'more_audio');
+};
 if ('mediaSession' in navigator) {
   navigator.mediaSession.setActionHandler('pause', () => !paused && $('pause').click());
   navigator.mediaSession.setActionHandler('play', () => paused && $('pause').click());
@@ -174,11 +195,41 @@ function onFix(fix) {
       (next ? ` · next: ${esc(next.name)} in ${Math.max(0, next.km - (engine.km ?? 0)).toFixed(1)} km` : ' · no more stories') +
       (simClock ? ' · SIMULATION' : '');
   if (place) play(place);
+  else if (engine.offRoute) tryLive(fix);
 }
+
+// ---------- live fallback (off the planned route; opt-in, needs data) ----------
+const liveCfg = () => store.get('live', { on: false, url: '', token: '' });
+
+async function tryLive(fix) {
+  const cfg = liveCfg();
+  if (!cfg.on || !cfg.url || !pack.live || liveBusy || engine.playing || !navigator.onLine) return;
+  if (now() < Math.max(liveNextAt, engine.quietUntil)) return;
+  liveBusy = true; liveNextAt = now() + LIVE_GAP_MS;
+  try {
+    const previous = Object.values(told()).sort((a, b) => a.at - b.at).slice(-2).map(v => v.name).join(', ');
+    for (const q of engine.told) liveTried.add(q);
+    const story = await liveStory(fix, cfg, pack.live, liveTried, previous);  // adds the place it tries to liveTried
+    if (story && engine?.offRoute && !engine.playing) play(story);
+  } catch (e) {
+    console.warn('live story failed', e);
+    $('dlNote').textContent = 'Live story failed: ' + e.message;
+  } finally {
+    liveBusy = false;
+  }
+}
+
+function showLive() {
+  const cfg = liveCfg();
+  $('liveOn').checked = cfg.on; $('liveUrl').value = cfg.url; $('liveToken').value = cfg.token;
+}
+for (const id of ['liveOn', 'liveUrl', 'liveToken'])
+  $(id).onchange = () => store.set('live', { on: $('liveOn').checked, url: $('liveUrl').value.trim(), token: $('liveToken').value.trim() });
 
 function begin() {
   engine = new Engine(pack, new Set(Object.keys(told())));
   current = null;
+  liveTried = new Set(); liveNextAt = 0;
   $('start').textContent = 'Stop journey';
   requestWakeLock();
   setButtons();
@@ -263,4 +314,5 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 await listPacks();
 if ($('packSel').value) await loadPack($('packSel').value);
 if (!pack) $('setup').open = true;
+showLive();
 setButtons();

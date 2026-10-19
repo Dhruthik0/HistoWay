@@ -41,7 +41,7 @@ class Projector:
     """Projects points onto a route polyline: -> (km along route, km off route, 'left'|'right')."""
 
     def __init__(self, points: list, km: list):
-        pts = np.asarray(points, dtype=float)
+        pts = self.pts = np.asarray(points, dtype=float)
         self.lat0 = np.radians(pts[:, 0].mean())
         self.xy = self._xy(pts[:, 0], pts[:, 1])
         self.km = np.asarray(km, dtype=float)
@@ -58,6 +58,10 @@ class Projector:
         i = int(d.argmin())
         cross = ab[i, 0] * (p[1] - a[i, 1]) - ab[i, 1] * (p[0] - a[i, 0])
         return float(self.km[i] + t[i] * (self.km[i + 1] - self.km[i])), float(d[i]), "left" if cross > 0 else "right"
+
+    def point_at(self, km: float) -> tuple[float, float]:
+        """(lat, lon) at a km marker along the route."""
+        return float(np.interp(km, self.km, self.pts[:, 0])), float(np.interp(km, self.km, self.pts[:, 1]))
 
     def crossings(self, line: list) -> list[float]:
         """km markers where a polyline [[lat, lon], ...] (e.g. a river) crosses the route."""
