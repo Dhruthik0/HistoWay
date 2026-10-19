@@ -12,7 +12,7 @@ let stopNow = null, stopped = false;
 
 export const chromeAvailable = () => !!(window.SpeechRecognition || window.webkitSpeechRecognition);
 export const whisperState = () => state;
-const whisperCached = async () => (await Promise.all(FILES.map(f => caches.match(f)))).every(Boolean);
+export const whisperCached = async () => (await Promise.all(FILES.map(f => caches.match(f)))).every(Boolean);
 
 // Safe to call again: later calls share the first download (and its progress callback).
 export function loadWhisper(onProgress) {
@@ -72,9 +72,11 @@ async function record(maxMs) {
   return new Blob(chunks, { type: rec.mimeType });
 }
 
-export async function listen({ online, maxMs = 8000 } = {}) {
+// beforeRetry: awaited before Whisper records after Chrome failed, so the app can ask the user to say it again.
+export async function listen({ online, maxMs = 8000, beforeRetry } = {}) {
   stopped = false;
-  if (online && chromeAvailable()) {
+  const triedChrome = online && chromeAvailable();
+  if (triedChrome) {
     try {
       const text = await chromeListen(maxMs);
       if (text || stopped) return { text, via: text ? 'chrome' : 'none' };
@@ -85,6 +87,8 @@ export async function listen({ online, maxMs = 8000 } = {}) {
   }
   if (state !== 'ready' && !(await whisperCached().catch(() => false)) || stopped) return { text: '', via: 'none' };
   try {
+    if (triedChrome && beforeRetry) await beforeRetry();
+    if (stopped) return { text: '', via: 'none' };
     const ready = loadWhisper();  // from the cache, while the user speaks
     ready.catch(() => {});
     const blob = await record(maxMs);

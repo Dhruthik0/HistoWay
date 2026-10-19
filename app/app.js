@@ -2,7 +2,7 @@
 import { Engine } from './engine.js';
 import { liveStory } from './live.js';
 import { intent, about, nearest, liveAnswer } from './ask.js';
-import { chromeAvailable, whisperState, loadWhisper, listen, stopListening } from './stt.js';
+import { chromeAvailable, whisperState, whisperCached, loadWhisper, listen, stopListening } from './stt.js';
 
 const $ = id => document.getElementById(id);
 const store = {  // localStorage can throw (private mode, blocked storage); the app still works without it
@@ -207,7 +207,8 @@ async function ask() {
   listening = true;
   setButtons();
   $('now').textContent = 'Listening...';
-  const heard = await listen({ online: navigator.onLine, maxMs: 10000 }).catch(e => (console.warn('listen failed', e), {}));
+  const heard = await listen({ online: navigator.onLine, maxMs: 10000,
+    beforeRetry: () => new Promise(r => speakDevice('Sorry, say that again.', r)) }).catch(e => (console.warn('listen failed', e), {}));
   listening = false;
   setButtons();
   if (token !== playToken) return;  // skipped, or the journey ended
@@ -216,7 +217,7 @@ async function ask() {
   $('now').textContent = q ? `"${q}"` : ' ';
   if (kind === 'what' && place) return play({ ...place, reminder: false });
   let file = null, text = OFFLINE;
-  if (!kind) text = whisperState() !== 'ready' && !(navigator.onLine && chromeAvailable())
+  if (!kind) text = whisperState() !== 'ready' && !(await whisperCached().catch(() => false)) && !(navigator.onLine && chromeAvailable())
     ? "I can't hear questions without signal yet. Download the offline voice model in Set-up." : "Sorry, I didn't catch that.";
   else if (kind !== 'free' && place?.answers?.[kind]) ({ audio: file, script: text } = place.answers[kind]);
   else if (canLive) {
@@ -362,14 +363,15 @@ function showTold() {
 $('resetTold').onclick = () => { store.set('told', {}); if (engine) engine.told.clear(); showTold(); };
 
 // ---------- offline voice model (questions without signal) ----------
-function showWhisper() {
-  const st = whisperState();
+async function showWhisper() {
+  const st = whisperState() === 'none' && await whisperCached().catch(() => false) ? 'ready' : whisperState();  // downloaded on an earlier visit
   $('whisperNote').textContent = { none: chromeAvailable() ? 'Not loaded. With signal, Chrome sends your question to Google to hear it.' : 'Not loaded.',
     loading: 'Downloading...', ready: 'Ready: questions work offline.', error: 'Download failed. Try again with signal.' }[st] ?? st;
   $('whisper').disabled = st === 'loading' || st === 'ready';
 }
 $('whisper').onclick = async () => {
   $('whisperBar').hidden = false;
+  navigator.storage?.persist?.();  // about 100 MB: ask the browser not to evict it
   const done = loadWhisper(f => { $('whisperBar').value = f; });
   showWhisper();
   try { await done; } catch (e) { console.warn('voice model failed', e); }
