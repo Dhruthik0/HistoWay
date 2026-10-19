@@ -254,11 +254,11 @@ PROVIDERS = {"bridge": bridge, "gemini": partial(openai_compat, ...), "grok": ..
 ```
 Histoway/
   histoway/ __main__.py common.py (config, SQLite cache, HTTP) llm.py route.py places.py (incl. sources) narrate.py (incl. MP3s) review.py
-  prompts/ story.txt journey.txt link.txt factcheck.txt
+  prompts/ story.txt journey.txt link.txt factcheck.txt answers.txt ask.txt
   config.toml   include.txt  exclude.txt   (the two lists are optional)
-  app/ index.html app.js engine.js live.js sw.js manifest.webmanifest icon.svg   packs/ (generated)
+  app/ index.html app.js engine.js live.js ask.js stt.js sw.js manifest.webmanifest icon.svg   packs/ (generated)
   worker/ worker.js wrangler.toml   (Phase 2 live-story proxy)
-  tests/ test_pipeline.py test_engine.mjs test_live.mjs
+  tests/ test_pipeline.py test_engine.mjs test_live.mjs test_ask.mjs stt_check.mjs
 ```
 *(As built in Phase 1: sources.py and db.py were folded into places.py and common.py. The simulator drives along the pack's own route; any recorded GPX can be replayed too, so no fixture file is needed.)*
 The PWA uses plain JS with no build step and no framework.
@@ -305,7 +305,7 @@ The PWA uses plain JS with no build step and no framework.
 - LLM fact-check pass on a different provider, plus a review screen
 - Tuning based on Skip presses
 
-**Phase 3 — Ask the guide**
+**Phase 3 — Ask the guide** — built 2026-10-20, see *Phase 3: how to run it* below; the microphone and Chrome speech are untested on a real phone
 - Push-to-talk using Whisper, with questions answered from the nearest places' sources ("What is that building?", "Tell me the dark history", "Why was this city built here?")
 - Trip recap and journal
 
@@ -462,3 +462,32 @@ On the phone, go to Set-up, turn on **Live stories**, and enter the Worker URL a
 - Live stories use the phone's voice, because Neerja (edge-tts) runs only on the laptop.
 - Callbacks are found by matching capitalised names in both stories and both sources, minus a list of generic words in `narrate._GENERIC`. They miss links that use different wording ("the Sultan" vs "Tipu").
 - Fact-checking with the same provider that wrote the story is weaker than using a second provider.
+
+---
+
+## Phase 3: how to run it
+
+**On the laptop:** `build` now also writes spoken answers to two fixed questions for each place: "Tell me the dark history of this place" and "Why is this place here?". They come from the place's own source text, or are left out when the source doesn't say. They are checked and fact-checked like stories, and they show on the review page as `dark-<QID>` and `why-<QID>`. The pack (version 3) also carries each place's source text, for live questions. This adds about one Bridge request per 3 places, plus their fact check.
+
+**Fact check, changed after the first real build:** problems are now rated major or minor, and only major ones hold a story; minor ones are listed on the review page. Position lines ("beside you"), scene-setting and closing reflections are never reported. Before this change, 27 of 34 stories were held, mostly for those.
+
+**On the phone:**
+- **Ask the guide** (the wide button under the four controls; works during a journey): tap it, ask, and tap again to stop early (or it stops by itself after 10 s). A playing story stops and counts as heard. No new story starts until the answer ends.
+  - "What's that?" / "Where are we?" plays the nearest place's story.
+  - "Tell me the dark history" / "Why is this place here?" plays the pre-generated answer (Neerja MP3), and works offline.
+  - Anything else is answered live through the Worker, only from the nearest places' source texts, and only when Live stories is on and there is signal. The same rule checks as live stories apply, so an answer with an unsupported name or year is not spoken.
+  - Offline without a pre-generated answer, it says so honestly.
+- **Speech-to-text:** Chrome's own recognition (en-IN) when online. It sends the audio to Google. The fallback is Whisper (`whisper-base.en`, 8-bit, via transformers.js 4.2.0) on the phone, which works with no signal.
+  - Download the model once in Set-up with **Download offline voice model**: about 82 MB, about 104 MB stored.
+  - If Chrome mishears, the phone says "Sorry, say that again." and Whisper listens.
+  - On this laptop, Whisper took about 4 s for a 3 s question once loaded. Expect a few times slower on a phone. `MODEL` in `app/stt.js` can switch to `whisper-tiny.en`: about 41 MB and about 2× faster, but less accurate with accents.
+- **Trip recap** (replaces "Told on this trip"): every place heard with this pack, when, and whether it was heard, skipped or stopped for a question. Each entry has its story text and links to read more.
+- **Download for offline** now also stores the "again", callback and answer audio (Phase 2 missed the first two).
+
+**Tests:** `node tests/test_ask.mjs` (question kinds, which place, live answers with a mocked Worker) along with the earlier ones. `node --experimental-websocket tests/stt_check.mjs [workdir]` is a slower, networked check. It drives headless Chrome and transcribes a Neerja clip online, then offline, then through `listen()` with a fake microphone. The first run downloads about 82 MB.
+
+**Known limits of Phase 3:**
+- Not tested with a real microphone, and the Chrome speech path can't run headless. Both need a try on the phone.
+- Whisper records for a fixed 10 s (or until you tap); there is no silence detection.
+- Live answers that mention a sensitive word (Tipu, caste...) are never spoken, the same policy as live stories.
+- The "why" and "dark" answers have only been run with a stand-in LLM so far.
