@@ -151,6 +151,25 @@ def test_answers_and_pack_entry():
         narrate.cache_get, narrate.cache_put, narrate.gather, narrate._ask, cli.cache_get, cli.CONFIG["voice"] = real
 
 
+def test_factcheck_severity():
+    """Only major problems hold a story; minor ones are kept for the reviewer; no severity counts as major."""
+    store = {("story", f"Q{i}:S:v"): {"name": f"Q{i}", "script": "Long ago.", "more_script": None, "flags": [],
+                                      "status": "ok", "source_text": "src"} for i in (1, 2, 3)}
+    reply = ('[{"n": 1, "problems": [{"severity": "minor", "quote": "Long ago", "issue": "loose"}]},'
+             ' {"n": 2, "problems": [{"severity": "major", "issue": "made up"}]}, {"n": 3, "problems": [{"issue": "x"}]}]')
+    real = narrate.cache_get, narrate.cache_put, narrate._ask
+    narrate.cache_get = lambda kind, key: store.get((kind, key))
+    narrate.cache_put = lambda kind, key, value: store.__setitem__((kind, key), value)
+    narrate._ask = lambda provider, instruction, s: reply
+    try:
+        narrate.factcheck([f"Q{i}:S:v" for i in (1, 2, 3)], "bridge")
+    finally:
+        narrate.cache_get, narrate.cache_put, narrate._ask = real
+    got = [store[("story", f"Q{i}:S:v")] for i in (1, 2, 3)]
+    assert [s["status"] for s in got] == ["ok", "needs_review", "needs_review"], got
+    assert got[0]["factcheck"]["minor"] == ['fact check: loose ("Long ago")'], got[0]
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

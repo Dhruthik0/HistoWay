@@ -7,7 +7,7 @@ For each story, list its problems, each with a severity.
 - a specific fact the source does not contain: a year, number, name, place, cause, motive, outcome or event;
 - a legend, myth, belief or disputed claim told as plain fact;
 - an invented quote, dialogue, thought or feeling presented as what really happened;
-- a significant dark side in the source that the story leaves out entirely: deaths, war, massacre, captivity, deportation, famine, epidemic, destruction, exploitation.
+- a significant dark side in the source that the story leaves out entirely: deaths, war, massacre, captivity, deportation, famine, epidemic, destruction, exploitation. This rule is only for full stories and for answers to "Tell me the dark history": a story whose title is another question (such as "Why is this place here?") or a short linking line answers only that, so never report a missing dark side for it.
 
 "minor" (noted for the reviewer, the story still plays):
 - a loose paraphrase or slight overstatement that keeps the source's meaning;

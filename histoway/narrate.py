@@ -92,7 +92,7 @@ def parse_reply(reply: str) -> list[dict]:
     return items
 
 
-_STOP = {"I", "I'm", "I'd", "I'll", "I've", "OK", "Okay", "Oh", "Mr", "Mrs", "Sir",
+_STOP = {"I", "I'm", "I'd", "I'll", "I've", "OK", "Okay", "Oh", "Mr", "Mrs", "Sir", "Histoway",
          "First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Eighth", "Ninth", "Tenth"}  # regnal ordinals
 
 
@@ -403,10 +403,15 @@ def factcheck(keys: list[str], provider: str) -> None:
         for n, (k, s) in enumerate(batch, 1):
             if not isinstance(items.get(n, {}).get("problems"), list):
                 continue
-            problems = [f"fact check: {p.get('issue', p)}" + (f' ("{p["quote"]}")' if p.get("quote") else "")
-                        if isinstance(p, dict) else f"fact check: {p}" for p in items[n]["problems"]]
-            cache_put("story", k, settle(s | {"factcheck": {"version": version, "problems": problems}}))
-            print(f"   {s['name']}: " + ("; ".join(problems) or "ok"), flush=True)
+            found = {"major": [], "minor": []}  # only major problems hold a story; a missing severity counts as major
+            for p in items[n]["problems"]:
+                p = p if isinstance(p, dict) else {"issue": str(p)}
+                found["minor" if p.get("severity") == "minor" else "major"].append(
+                    f"fact check: {p.get('issue')}" + (f' ("{p["quote"]}")' if p.get("quote") else ""))
+            cache_put("story", k, settle(s | {"factcheck": {"version": version, "problems": found["major"],
+                                                            "minor": found["minor"]}}))
+            print(f"   {s['name']}: " + ("; ".join(found["major"]) or "ok")
+                  + (f"  [{len(found['minor'])} minor]" if found["minor"] else ""), flush=True)
 
 
 def render(text: str | None, voice: str) -> "Path | None":

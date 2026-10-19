@@ -20,7 +20,8 @@ def held(everything: bool = False) -> list[tuple[str, dict]]:
 
 
 def problems(s: dict) -> list[str]:
-    return s["flags"] + (s.get("factcheck") or {}).get("problems", [])
+    fc = s.get("factcheck") or {}
+    return s["flags"] + fc.get("problems", []) + [f"(minor) {m}" for m in fc.get("minor", [])]
 
 
 def approve(sid: str) -> bool:
