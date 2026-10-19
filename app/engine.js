@@ -115,12 +115,12 @@ export class Engine {
 
   penalty(p) { return (p.types ?? []).reduce((sum, ty) => sum + (this.skips[ty] ?? 0), 0) * this.o.skipPenalty; }
 
-  busy(place) { this.playing = place; }  // replay / tell me more: hold off new stories
+  busy(place) { this.playing = place; }  // replay / tell me more / a question (qid null): hold off new stories
 
-  // outcome: completed | skipped | interrupted. Only "interrupted" leaves the place untold.
+  // outcome: completed | skipped | asked | interrupted. Only "interrupted" leaves the place untold.
   storyEnded(t, outcome) {
     const p = this.playing;
-    if (p && outcome !== 'interrupted') this.told.add(p.qid);
+    if (p?.qid != null && outcome !== 'interrupted') this.told.add(p.qid);
     if (p && outcome === 'skipped' && !p.reminder) for (const ty of p.types ?? []) this.skips[ty] = (this.skips[ty] ?? 0) + 1;
     this.playing = null;
     this.quietUntil = t + (p?.gap_s ?? (p?.reminder ? this.o.againGapS : this.o.gapS)) * 1000;  // gap_s: the opening is a lead-in

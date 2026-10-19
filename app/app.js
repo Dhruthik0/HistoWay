@@ -1,6 +1,8 @@
 // Histoway phone app: pack download, GPS or simulator -> engine -> audio. Plain JS, no build step.
 import { Engine } from './engine.js';
 import { liveStory } from './live.js';
+import { intent, about, nearest, liveAnswer } from './ask.js';
+import { chromeAvailable, whisperState, loadWhisper, listen, stopListening } from './stt.js';
 
 const $ = id => document.getElementById(id);
 const store = {  // localStorage can throw (private mode, blocked storage); the app still works without it
@@ -8,10 +10,10 @@ const store = {  // localStorage can throw (private mode, blocked storage); the 
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
 };
 
-let pack = null, packBase = '', engine = null;
+let pack = null, packId = '', packBase = '', engine = null;
 let watchId = null, simTimer = null, simClock = null, wakeLock = null;
 let current = null;  // {place, which: 'audio'|'more_audio'} being played (or last played)
-let paused = false, playToken = 0;
+let paused = false, playToken = 0, listening = false;
 let liveBusy = false, liveNextAt = 0, liveTried = new Set();
 const LIVE_GAP_MS = 3 * 60 * 1000;  // at most one live attempt every 3 minutes
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -43,7 +45,8 @@ async function download() {
     const p = await (await fetch(base + 'pack.json', { cache: 'no-store' })).json();
     const cache = await caches.open('pack-' + id);
     await cache.put(base + 'pack.json', new Response(JSON.stringify(p), { headers: { 'Content-Type': 'application/json' } }));
-    const urls = p.places.flatMap(x => [x.audio, x.more_audio]).filter(Boolean).map(a => base + a);
+    const urls = p.places.flatMap(x => [x.audio, x.more_audio, x.again?.audio, x.link?.audio, x.answers?.dark?.audio, x.answers?.why?.audio])
+      .filter(Boolean).map(a => base + a);
     $('dl').max = urls.length || 1;
     for (const [i, u] of urls.entries()) {
       if (!(await cache.match(u))) await cache.add(u);
@@ -64,7 +67,7 @@ async function loadPack(id) {
   const res = await caches.match(`packs/${id}/pack.json`);
   if (!res) return;
   pack = await res.json();
-  packBase = `packs/${id}/`;
+  packId = id; packBase = `packs/${id}/`;
   $('packTitle').textContent = `${pack.title} · ${pack.total_km} km · ${pack.places.length} stories`;
   $('start').disabled = $('sim').disabled = false;
   showTold();
@@ -142,6 +145,7 @@ async function play(place, which = 'audio') {
 
 function stopAudio() {
   playToken++;
+  if (listening) stopListening();
   audio.pause();
   if (audio.src) URL.revokeObjectURL(audio.src);
   audio.removeAttribute('src');
@@ -151,9 +155,12 @@ function stopAudio() {
 function finished(outcome) {
   if (!engine?.playing) return;
   const p = engine.storyEnded(now(), outcome);
-  if (p && outcome !== 'interrupted') {
+  if (p?.qid && outcome !== 'interrupted') {  // a question's hold has no qid: nothing to log
     const log = told();
-    if (!log[p.qid]) { log[p.qid] = { at: Date.now(), outcome, name: p.name }; store.set('told', log); }
+    if (!log[p.qid]) {
+      log[p.qid] = { at: Date.now(), outcome, name: p.name, pack: packId, ...(p.live && { sources: p.sources, script: p.script }) };
+      store.set('told', log);
+    }
     showTold();
   }
   $('now').textContent = ' ';
@@ -166,6 +173,8 @@ function setButtons() {
   $('pause').textContent = paused ? 'Resume' : 'Pause';
   $('replay').disabled = !current;
   $('more').disabled = !(current?.place.reminder || current?.place.more_script);
+  $('ask').disabled = !engine;
+  $('ask').textContent = listening ? 'Done asking' : 'Ask the guide';
 }
 
 $('pause').onclick = () => {
@@ -184,6 +193,45 @@ if ('mediaSession' in navigator) {
   navigator.mediaSession.setActionHandler('play', () => paused && $('pause').click());
   navigator.mediaSession.setActionHandler('nexttrack', () => $('skip').click());
 }
+
+// ---------- ask the guide (push to talk) ----------
+const OFFLINE = "I don't have that one offline. Ask me about the dark history, or why a place is here.";
+
+async function ask() {
+  if (listening) return stopListening();
+  if (!engine) return;
+  stopAudio();
+  if (engine.playing) finished('asked');  // the story counts as told, with no skip penalty
+  const token = playToken;
+  engine.busy({ qid: null, gap_s: 10, name: 'Question' });  // no new story while asking and answering
+  listening = true;
+  setButtons();
+  $('now').textContent = 'Listening...';
+  const heard = await listen({ online: navigator.onLine, maxMs: 10000 }).catch(e => (console.warn('listen failed', e), {}));
+  listening = false;
+  setButtons();
+  if (token !== playToken) return;  // skipped, or the journey ended
+  const q = heard.text?.trim() ?? '', kind = intent(q), place = about(pack.places, engine.km, current?.place);
+  const cfg = liveCfg(), canLive = cfg.on && cfg.url && pack.live?.ask_prompt && navigator.onLine;
+  $('now').textContent = q ? `"${q}"` : ' ';
+  if (kind === 'what' && place) return play({ ...place, reminder: false });
+  let file = null, text = OFFLINE;
+  if (!kind) text = whisperState() !== 'ready' && !(navigator.onLine && chromeAvailable())
+    ? "I can't hear questions without signal yet. Download the offline voice model in Set-up." : "Sorry, I didn't catch that.";
+  else if (kind !== 'free' && place?.answers?.[kind]) ({ audio: file, script: text } = place.answers[kind]);
+  else if (canLive) {
+    const where = `on the ${pack.title} road trip, about km ${(engine.km ?? 0).toFixed(0)}` + (place ? `, near ${place.name}` : '');
+    try { text = await liveAnswer(q, [place, ...nearest(pack.places, engine.km ?? 0)].filter(Boolean), cfg, pack.live, where); }
+    catch (e) { console.warn('live answer failed', e); text = null; }
+    if (token !== playToken) return;
+    text ??= "Sorry, I don't have a good answer to that one.";
+  }
+  await chime();
+  if (token !== playToken) return;
+  await playOne(file, text);
+  if (token === playToken) finished('completed');
+}
+$('ask').onclick = ask;
 
 // ---------- journey ----------
 function onFix(fix) {
@@ -295,15 +343,39 @@ async function requestWakeLock() {
 }
 document.addEventListener('visibilitychange', () => { if (engine && document.visibilityState === 'visible') requestWakeLock(); });
 
-// ---------- told log ----------
+// ---------- told log and trip recap ----------
+const OUTCOME = { completed: 'heard', skipped: 'skipped', asked: 'stopped for a question' };
+
 function showTold() {
-  const log = told(), names = Object.values(log);
-  $('toldCount').textContent = `${names.length} places remembered`;
-  const ids = new Set(pack?.places.map(p => p.qid));
-  $('log').innerHTML = Object.entries(log).filter(([q]) => ids.has(q)).sort((a, b) => a[1].at - b[1].at)
-    .map(([, v]) => `<li>${esc(v.name)}${v.outcome === 'skipped' ? ' (skipped)' : ''}</li>`).join('');
+  const log = told(), byQid = new Map(pack?.places.map(p => [p.qid, p]));
+  $('toldCount').textContent = `${Object.keys(log).length} places remembered`;
+  $('log').innerHTML = Object.entries(log).filter(([q, v]) => byQid.has(q) || (pack && v.pack === packId))
+    .sort((a, b) => a[1].at - b[1].at).map(([q, v]) => {
+      const p = byQid.get(q), script = p?.script ?? v.script;
+      const links = (p?.sources ?? v.sources ?? []).filter(x => /^https?:/.test(x.url))
+        .map(x => `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a>`).join(', ');
+      return `<li><b>${esc(v.name)}</b> <span class="muted">${esc(new Date(v.at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }))}` +
+        ` · ${esc(OUTCOME[v.outcome] ?? v.outcome)}</span>${links ? `<div class="muted">Read more: ${links}</div>` : ''}` +
+        (script ? `<details><summary class="muted">The story</summary><p>${esc(script)}</p></details>` : '') + '</li>';
+    }).join('');
 }
 $('resetTold').onclick = () => { store.set('told', {}); if (engine) engine.told.clear(); showTold(); };
+
+// ---------- offline voice model (questions without signal) ----------
+function showWhisper() {
+  const st = whisperState();
+  $('whisperNote').textContent = { none: chromeAvailable() ? 'Not loaded. With signal, Chrome sends your question to Google to hear it.' : 'Not loaded.',
+    loading: 'Downloading...', ready: 'Ready: questions work offline.', error: 'Download failed. Try again with signal.' }[st] ?? st;
+  $('whisper').disabled = st === 'loading' || st === 'ready';
+}
+$('whisper').onclick = async () => {
+  $('whisperBar').hidden = false;
+  const done = loadWhisper(f => { $('whisperBar').value = f; });
+  showWhisper();
+  try { await done; } catch (e) { console.warn('voice model failed', e); }
+  $('whisperBar').hidden = whisperState() !== 'loading';
+  showWhisper();
+};
 
 // ---------- start-up ----------
 $('download').onclick = download;
@@ -315,4 +387,5 @@ await listPacks();
 if ($('packSel').value) await loadPack($('packSel').value);
 if (!pack) $('setup').open = true;
 showLive();
+showWhisper();
 setButtons();

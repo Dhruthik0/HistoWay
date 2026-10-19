@@ -107,6 +107,20 @@ assert.deepEqual(log.map(x => x.qid), ['X', 'R']);
 e = new Engine(pack([{ ...place('intro-x', 0), gap_s: 10 }, place('H', 0.3, 'S')]));
 assert.deepEqual(drive(e, { durS: 30, kmh: 30, toKm: 2 }).map(x => x.qid), ['intro-x', 'H']);
 
+// Ask: a story cut short by a question counts as told with no skip penalty; the question's hold (qid null) holds
+// off new stories, adds nothing to told, and leaves only its own short gap.
+e = new Engine({ ...pack([scored('T1', 2, ['hindu temple'], 9), scored('T2', 6, ['hindu temple'], 7)]), engine: { minScore: 6, skipPenalty: 2 } });
+const fixAt = km => { const [lat, lon] = r.pointAt(km); return { lat, lon, accuracy: 5, speed: 60 / 3.6 }; };
+assert.equal(e.update({ ...fixAt(1.8), t: 0 })?.qid, 'T1');
+e.storyEnded(1000, 'asked');
+assert.ok(e.told.has('T1') && !e.skips['hindu temple']);
+e.busy({ qid: null, gap_s: 10, name: 'Question' });
+assert.equal(e.update({ ...fixAt(5.9), t: 60000 }), null);
+e.storyEnded(70000, 'completed');
+assert.ok(!e.told.has(null) && e.told.size === 1);
+assert.equal(e.update({ ...fixAt(5.95), t: 79000 }), null, 'gap_s 10 after the answer');
+assert.equal(e.update({ ...fixAt(5.96), t: 81000 })?.qid, 'T2');
+
 // Bad accuracy is ignored.
 assert.equal(new Engine(pack([place('A', 0.1)])).update({ lat: 12, lon: 77, accuracy: 500, speed: 10, t: 0 }), null);
 

@@ -28,6 +28,8 @@
   .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   details summary { cursor: pointer; font-weight: 600; }
   ol { padding-left: 20px; margin: 6px 0; }
+  #log li { margin: 8px 0; }
+  #log details summary { font-weight: 400; }
   progress { width: 100%; }
 </style>
 </head>
@@ -50,10 +52,11 @@
     <button id="replay" disabled>Replay</button>
     <button id="more" disabled>Tell me more</button>
   </div>
+  <button class="primary" id="ask" disabled style="margin-top:10px">Ask the guide</button>
 
   <div class="card"><button class="primary" id="start" disabled>Start journey</button></div>
 
-  <div class="card"><details><summary>Told on this trip</summary><ol id="log"></ol></details></div>
+  <div class="card"><details><summary>Trip recap</summary><ol id="log"></ol></details></div>
 
   <div class="card"><details id="setup"><summary>Set-up</summary>
     <label for="packSel">Trip pack (from the laptop)</label>
@@ -70,12 +73,17 @@
     <div class="row" style="margin-top:8px"><button id="sim" disabled>Simulate route</button>
       <label class="row" style="margin:0">or replay a GPX track <input id="gpx" type="file" accept=".gpx,application/gpx+xml"></label></div>
 
-    <label>Live stories when you leave the planned route (needs mobile data)</label>
+    <label>Questions without signal: Ask the guide hears you on the phone itself (downloaded once)</label>
+    <div class="row"><button id="whisper">Download offline voice model</button><span class="muted" id="whisperNote"></span></div>
+    <progress id="whisperBar" value="0" max="1" hidden></progress>
+
+    <label>Live stories when you leave the planned route, and live answers (needs mobile data)</label>
     <div class="row"><label class="row" style="margin:0;color:inherit"><input type="checkbox" id="liveOn"> On</label></div>
     <div class="row" style="margin-top:6px"><input id="liveUrl" type="url" placeholder="Worker URL" aria-label="Worker URL" style="flex:1">
       <input id="liveToken" type="password" placeholder="Worker token" aria-label="Worker token" style="flex:1"></div>
     <div class="muted">Off by default. When on, your position rounded to about 100 m goes to Wikipedia, and the name and article of a
-      nearby place go to your Cloudflare Worker and its LLM. Live stories use the phone's own voice.</div>
+      nearby place go to your Cloudflare Worker and its LLM; a question you ask goes there too, with the nearest places'
+      articles. Live stories and answers use the phone's own voice.</div>
 
     <label>Places already heard are never repeated (you hear one "again" line instead)</label>
     <div class="row"><button id="resetTold">Forget what I've heard</button><span class="muted" id="toldCount"></span></div>

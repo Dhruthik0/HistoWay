@@ -16,7 +16,7 @@ export function parseReply(reply) {
 }
 
 // Mirror of narrate.check in histoway/narrate.py (flags only): change both together.
-export function check(story, sourceText, rules, known = '') {
+export function check(story, sourceText, rules, known = '', dark = true) {  // dark: false for answers to questions
   const text = story.script + ' ' + (story.more_script || ''), src = sourceText.replaceAll(',', ''), low = text.toLowerCase();
   const isYear = n => /^(1\d{3}|20\d{2})$/.test(n);
   const flags = [];
@@ -29,7 +29,7 @@ export function check(story, sourceText, rules, known = '') {
   if (/wikipedia|\bsources\b/i.test(text)) flags.push('mentions sources/Wikipedia');
   if (!story.claims.length) flags.push('no claims listed');
   const srcLow = src.toLowerCase();
-  for (const w of rules.dark_themes) {
+  for (const w of dark ? rules.dark_themes : []) {
     const m = srcLow.match(new RegExp(w));
     if (m && !new RegExp(w).test(low)) flags.push(`source mentions '${m[0]}', story does not`);
   }
