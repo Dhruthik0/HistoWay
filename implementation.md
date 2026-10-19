@@ -9,7 +9,7 @@ On a road trip from Bangalore to Leh, you passed hundreds of places without know
 **Decisions you've made:**
 - **Where stories are generated:** both ways. Stories are mainly pre-generated on the laptop before a trip. A live cloud LLM is the fallback for places that weren't cached or when you leave the route.
 - **LLM:** you can switch between your AI Bridge (`/home/8265k/Desktop/my_proj/free_chatGpt_Api`), Gemini and Grok (xAI).
-- **TTS:** the phone's built-in speech (Web Speech API) is the default. Deepgram Aura is the alternative you can switch to. Whisper is kept for future voice questions, because it is speech-to-text, not TTS.
+- **TTS:** *(changed after Phase 0)* every story uses the Microsoft Edge voice **en-IN-NeerjaNeural**, pre-rendered to MP3 on the laptop with `edge-tts`. The phone's built-in speech is only the fallback when an MP3 is missing. Deepgram Aura stays a switchable option for later. Whisper is kept for future voice questions, because it is speech-to-text, not TTS.
 - **Platform:** a PWA (web app).
 
 **Assumptions I made (not verified):**
@@ -175,10 +175,9 @@ score = 3·log(1 + wikipedia_language_count)   # how notable the place is overal
 
 ## 10. Audio narration
 
-- **Default:**
-  - `speechSynthesis` (Web Speech API) on the phone, which is free.
-  - Whether it works offline depends on the Android Google TTS voices installed. Install the English (India) offline voice and check it in airplane mode.
-  - It is a Phase 0 check.
+- **Default (decided in Phase 0):** the Edge voice `en-IN-NeerjaNeural` via `edge-tts`, rendered to MP3 on the laptop (`voice` in `config.toml`) and bundled in the pack, so it plays offline.
+  - It needs no key and costs nothing, but it is **unofficial use of Microsoft's read-aloud service**, the same risk class as the AI Bridge. Fine for a personal prototype; a public app needs a licensed voice.
+  - If rendering fails, the story ships without an MP3 and the phone reads it with `speechSynthesis` (Web Speech API, en-IN voice if installed).
 - **Deepgram (switchable, Phase 2):**
   - Pre-rendered to MP3 **on the laptop**, so the API key never reaches the phone. The MP3s are bundled in the pack.
   - Size: at about 400 words per story, 300 stories works out to a few hundred MB at speech bitrates, so it is optional per trip.
@@ -205,7 +204,7 @@ score = 3·log(1 + wikipedia_language_count)   # how notable the place is overal
 | Routing | OSRM public demo server | Fair use, not for production. Can be self-hosted later with the Geofabrik India extract |
 | Geocoding | Nominatim | 1 request per second, with a custom User-Agent |
 | Places and facts | Wikidata, Overpass, Wikipedia APIs | Free; send a descriptive User-Agent and cache everything |
-| TTS | Phone's Web Speech API | Free, offline once voices are installed |
+| TTS | Edge voice en-IN-NeerjaNeural via `edge-tts`, MP3s rendered on the laptop; phone's Web Speech API as fallback | Free, no key; unofficial use of Microsoft's service, personal use only. MP3s play offline |
 | TTS, better voice | Deepgram Aura | **Paid service that gives free credit on signup; it is not a permanent free tier.** Fine for testing. For a free alternative long-term, use Piper or Kokoro run locally on the laptop |
 | Speech-to-text (Phase 3) | Whisper run locally, or in the browser with transformers.js | Free; or Chrome's Web Speech recognition, which is free but online |
 | PWA hosting | GitHub Pages or Cloudflare Pages | Free static hosting. Trip packs are imported locally, not published, because they reveal travel plans |
@@ -254,12 +253,13 @@ PROVIDERS = {"bridge": bridge, "gemini": partial(openai_compat, ...), "grok": ..
 **Project layout, deliberately small:**
 ```
 Histoway/
-  histoway/ __main__.py route.py places.py sources.py narrate.py llm.py db.py
+  histoway/ __main__.py common.py (config, SQLite cache, HTTP) llm.py route.py places.py (incl. sources) narrate.py (incl. MP3s)
   prompts/story.txt
-  config.toml   include.txt  exclude.txt
-  app/ index.html app.js sw.js manifest.webmanifest
-  tests/ test_select.py test_engine.html (or node test)  fixtures/blr_mys.gpx
+  config.toml   include.txt  exclude.txt   (the two lists are optional)
+  app/ index.html app.js engine.js sw.js manifest.webmanifest icon.svg   packs/ (generated)
+  tests/ test_pipeline.py test_engine.mjs
 ```
+*(As built in Phase 1: sources.py and db.py were folded into places.py and common.py. The simulator drives along the pack's own route; any recorded GPX can be replayed too, so no fixture file is needed.)*
 The PWA uses plain JS with no build step and no framework.
 
 ## 14. Data entities
@@ -283,12 +283,12 @@ The PWA uses plain JS with no build step and no framework.
 
 ## 16. Development phases and roadmap
 
-**Phase 0 — Test whether the stories are good (1–2 days, no app yet)**
+**Phase 0 — Test whether the stories are good (1–2 days, no app yet)** — ✅ done 2026-10-14 (storyteller prompt v3, Neerja voice chosen)
 1. Pick 10 places by hand on the Bangalore → Mysore road: Vidhana Soudha, Attara Kacheri, Cubbon Park, MG Road, Lalbagh, Ramanagara, Srirangapatna, Mysore Palace, Chamundi Hill and the Kaveri crossing.
 2. Write `prompts/story.txt`. Generate the stories through the Bridge with a quick script. Listen with the phone's TTS.
 3. **Pass:** at least 7 of 10 sound like a storyteller, contain no made-up facts (spot-check against Wikipedia), and include the bad side where it exists (e.g. Srirangapatna 1799). If they fail, fix the prompt before building anything else.
 
-**Phase 1 — MVP, the core experience (about 2–3 weeks part-time)**
+**Phase 1 — MVP, the core experience (about 2–3 weeks part-time)** — built 2026-10-14, see *Phase 1: how to run it* below; the drive test is yours
 1. `llm.py` with the Bridge and the OpenAI-compatible provider. Test it with a single prompt on each provider.
 2. `route.py`: geocoding, OSRM, the route line, and projecting a point to a km marker.
 3. `places.py` and `sources.py`: Wikidata and Overpass candidates, scoring, budget, merging, include and exclude lists, and Wikipedia excerpts, all cached in SQLite.
@@ -394,3 +394,35 @@ The PWA uses plain JS with no build step and no framework.
   - On a real drive, at least 80% of stories start before the place (a passenger logs the timing).
 - **Provider switch:** the same build with `--llm gemini` and `--llm grok` produces valid packs.
 - **Offline:** with airplane mode on after importing the pack, the full simulated trip still plays.
+
+---
+
+## Phase 1: how to run it
+
+**On the laptop** (start the AI Bridge first: `ai-up`, then `ai-check`):
+```
+.venv/bin/python -m histoway build "Bangalore" "Mysore" --dry   # route + chosen places only, no LLM
+.venv/bin/python -m histoway build "Bangalore" "Mysore"         # stories (cached, resumable) + Neerja MP3s -> app/packs/
+.venv/bin/python -m histoway review                              # stories held for review, with their flags
+.venv/bin/python -m histoway approve Q653988                     # play a held story after all; then build again (quick)
+.venv/bin/python -m histoway redo Q653988 --note "include the deportations"   # regenerate one story
+.venv/bin/python -m histoway build "Bangalore" "Mysore" --llm gemini           # same with Gemini (needs GEMINI_API_KEY)
+```
+- Places: tune `config.toml` `[select]`; force or block places with Wikidata IDs in `include.txt` / `exclude.txt`.
+- Held for review (not played until approved): a year, number or name not in the source; a source with a dark-history theme the story leaves out; a contested topic (Tipu Sultan, communal, caste...); a mention of Wikipedia. Changing these rules in `config.toml` re-checks cached stories at the next build.
+
+**On the phone** (USB, Chrome on Android):
+```
+python3 -m http.server 8765 --bind 127.0.0.1 -d app     # serve the app and packs, laptop only
+adb reverse tcp:8765 tcp:8765                           # phone's localhost:8765 -> laptop
+```
+Open `http://localhost:8765/` on the phone → Set-up → choose the pack → **Download for offline**. After that it works with the laptop unplugged (same address). GPS and the service worker need a secure origin, which `localhost` is; a LAN IP over plain http would not work.
+
+**Tests:** `.venv/bin/python tests/test_pipeline.py` and `node tests/test_engine.mjs` (no network).
+
+**Known limits of this MVP:**
+- The screen must stay on (Wake Lock); a PWA loses GPS when the screen locks.
+- Opening/closing stories, "on your left again" lines, and live fallback are Phase 2.
+- If a phone call pauses a story, press Resume.
+- River crossings come from Overpass, whose public servers are often overloaded; the build warns and continues without them.
+- Gemini and Grok are wired in but untested: no API keys on this laptop.

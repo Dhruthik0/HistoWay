@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1d3b2f">
+<title>Histoway</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg">
+<style>
+  :root { --bg: #f6f4ee; --fg: #1d1d1b; --muted: #6b6a64; --card: #fff; --line: #d9d5c9; --accent: #1d6b4f; --warn: #b4521b; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #121411; --fg: #e9e7df; --muted: #9d9b92; --card: #1c1f1b; --line: #33372f; --accent: #46b386; --warn: #e58a4d; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 17px/1.45 system-ui, sans-serif; background: var(--bg); color: var(--fg); }
+  main { max-width: 640px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .muted { color: var(--muted); font-size: 14px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin: 12px 0; }
+  .warn { color: var(--warn); }
+  #now { font-size: 22px; font-weight: 600; min-height: 1.4em; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  button { font: inherit; font-weight: 600; border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--fg); padding: 12px; min-height: 48px; }
+  .grid button { min-height: 84px; font-size: 20px; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; width: 100%; min-height: 64px; font-size: 20px; }
+  button:disabled { opacity: .4; }
+  select, input { font: inherit; padding: 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--fg); max-width: 100%; }
+  label { display: block; margin: 10px 0 4px; font-size: 14px; color: var(--muted); }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  details summary { cursor: pointer; font-weight: 600; }
+  ol { padding-left: 20px; margin: 6px 0; }
+  progress { width: 100%; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Histoway</h1>
+  <div class="muted" id="packTitle">No trip pack loaded</div>
+
+  <div class="card warn" id="driverNote" hidden>Set everything up before you drive. Histoway is audio only; don't look at or tap the screen while driving. Keep the phone on a charger with the screen on.
+    <div class="row" style="margin-top:8px"><button id="driverOk">OK</button></div></div>
+
+  <div class="card">
+    <div id="now">&nbsp;</div>
+    <div class="muted" id="status">Not started</div>
+  </div>
+
+  <div class="grid">
+    <button id="pause" disabled>Pause</button>
+    <button id="skip" disabled>Skip</button>
+    <button id="replay" disabled>Replay</button>
+    <button id="more" disabled>Tell me more</button>
+  </div>
+
+  <div class="card"><button class="primary" id="start" disabled>Start journey</button></div>
+
+  <div class="card"><details><summary>Told on this trip</summary><ol id="log"></ol></details></div>
+
+  <div class="card"><details id="setup"><summary>Set-up</summary>
+    <label for="packSel">Trip pack (from the laptop)</label>
+    <div class="row"><select id="packSel"></select><button id="download">Download for offline</button></div>
+    <progress id="dl" value="0" max="1" hidden></progress>
+    <div class="muted" id="dlNote"></div>
+
+    <label>Simulator (testing without driving)</label>
+    <div class="row">
+      <select id="simSpeed" aria-label="Simulated speed"><option value="30">30 km/h</option><option value="60" selected>60 km/h</option><option value="90">90 km/h</option></select>
+      <select id="simMult" aria-label="Time speed-up"><option>1</option><option selected>10</option><option>20</option></select>×
+      <input id="simFrom" type="number" min="0" value="0" step="1" style="width:6em" aria-label="Start km"> km
+    </div>
+    <div class="row" style="margin-top:8px"><button id="sim" disabled>Simulate route</button>
+      <label class="row" style="margin:0">or replay a GPX track <input id="gpx" type="file" accept=".gpx,application/gpx+xml"></label></div>
+
+    <label>Places already heard are never repeated</label>
+    <div class="row"><button id="resetTold">Forget what I've heard</button><span class="muted" id="toldCount"></span></div>
+  </details></div>
+</main>
+<script type="module" src="app.js"></script>
+</body>
+</html>

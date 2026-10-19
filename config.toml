@@ -1,0 +1,113 @@
+# Histoway settings. Distances are km unless named _m.
+llm = "bridge"                      # bridge | gemini | grok | ollama   (override: --llm gemini)
+voice = "edge:en-IN-NeerjaNeural"   # stories pre-rendered to MP3 on the laptop; "device" = phone TTS only
+batch = 3                           # places per LLM request; the Bridge allows ~100-200 requests a day
+pace_s = 20                         # gap between LLM requests (fast bursts trip ChatGPT's throttle)
+
+# API keys come from environment variables, never from this file.
+# Model names change often: check each provider's model list before relying on them.
+[providers.gemini]
+base_url = "https://generativelanguage.googleapis.com/v1beta/openai"
+model = "gemini-3-flash-preview"    # https://ai.google.dev/gemini-api/docs/models
+key_env = "GEMINI_API_KEY"
+
+[providers.grok]
+base_url = "https://api.x.ai/v1"
+model = "grok-4"                    # https://docs.x.ai/docs/models
+key_env = "XAI_API_KEY"
+
+[providers.ollama]
+base_url = "http://127.0.0.1:11434/v1"
+model = "llama3.1:8b"               # whatever you have pulled
+key_env = ""
+
+[select]
+corridor = 2.0           # max distance from the road for most places
+corridor_big = 10.0      # ...and for the "big" types below (you can see them from far away)
+big_types = ["mountain", "hill", "river", "city", "town", "dam"]   # visible from afar
+min_sitelinks = 4        # Wikipedia language editions; filters out minor items
+per_10km = 6             # max stories per 10 km of road (min_score keeps open highway quieter)
+min_score = 6.0
+merge_m = 300            # places closer than this are told as one story
+share_L = 0.15           # top share of picks get the long (L) story with "tell me more"
+share_M = 0.35           # next share get M; the rest S
+words = { S = 60, M = 180, L = 400 }
+more_words = 250
+
+# Added to the score when a Wikidata type ("instance of") contains the key ("=key": equals it).
+[select.type_bonus]
+fort = 3.0
+battle = 3.0
+siege = 3.0
+legislative = 2.0
+court = 1.0
+palace = 2.5
+temple = 1.5
+mosque = 1.5
+church = 1.5
+tomb = 2.0
+mausoleum = 2.0
+monument = 2.0
+archaeological = 3.0
+ruins = 3.0
+river = 2.5
+mountain = 2.0
+hill = 2.0
+lake = 1.5
+reservoir = 1.0
+dam = 1.5
+waterfall = 2.0
+cave = 2.5
+museum = 1.0
+park = 0.5
+garden = 1.5
+town = 1.0
+city = 1.0
+"railway station" = -4.0
+"metro station" = -6.0
+"bus station" = -6.0
+school = -5.0
+college = -4.0
+university = -2.0
+hospital = -5.0
+company = -6.0
+business = -6.0
+hotel = -5.0
+"shopping mall" = -5.0
+neighbourhood = -4.0
+neighborhood = -4.0
+suburb = -4.0
+ward = -6.0
+"district of" = -6.0
+taluk = -6.0
+constituency = -10.0
+"office building" = -3.0
+stadium = -2.0
+"cricket field" = -2.0
+"research institute" = -4.0
+"educational institution" = -4.0
+"rapid transit" = -6.0
+division = -6.0
+diocese = -10.0
+"historical country" = -6.0
+"state of india" = -6.0
+"former administrative" = -6.0
+# not places at all: people, events and organisations that happen to have a coordinate
+"=human" = -20.0          # "=" means exact type, so "human settlement" is not hit
+tournament = -20.0
+festival = -20.0
+organization = -20.0
+outbreak = -20.0
+"residential" = -5.0
+
+[review]
+# Regexes, matched case-insensitively.
+# The STORY mentions one of these -> contested topic: always needs your approval.
+sensitive_words = ["tipu", "communal", "riot", "forced conversion", "converted to islam", "caste", "partition", "massacre", "terror"]
+# Dark-history themes. The SOURCE matches a theme but the story matches nothing in it -> "dark history left out".
+dark_themes = [
+  "deport|bondage|captiv|prisoner|enslav|\\bslaves?\\b|forced (labou?r|conversion)",
+  "massacre|genocide|riot",
+  "famine",
+  "plunder|\\blooted",
+]

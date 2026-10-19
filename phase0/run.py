@@ -19,7 +19,7 @@ from string import Template
 
 ROOT = Path(__file__).resolve().parent
 OUT = ROOT / "out"
-PROMPT = (ROOT.parent / "prompts" / "story.txt").read_text()
+PROMPT = (ROOT / "story.txt").read_text()  # frozen Phase 0 prompt; prompts/story.txt is the batched one
 UA = "Histoway/0.1 (personal prototype; phase0)"
 TRIP = "Bengaluru to Mysuru by road"
 WORDS = {"S": 60, "M": 180, "L": 400}

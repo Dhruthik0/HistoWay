@@ -1,0 +1,10 @@
+{
+  "name": "Histoway",
+  "short_name": "Histoway",
+  "description": "Stories about the places you pass on a road trip",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#121411",
+  "theme_color": "#1d3b2f",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
